@@ -16,13 +16,6 @@ OBJECTIVES
 The project objectives are to deploy edge deep learning models (CNN-LSTM and Transformers) for privacy-preserving energy forecasting, architect a serverless AWS backend for secure model aggregation, enable cold-start target adaptation, and optimize multi-campus load balancing under time-of-use tariffs.
 
 
-Proposed Architecture/Framework
+Team members
 
-
-
-
-
-
-
-
-
+Manav mishra 
