@@ -1,0 +1,11 @@
+.DS_Store
+.vscode/
+__pycache__/
+*.py[cod]
+.env
+dataset/raw/*
+!dataset/raw/.gitkeep
+dataset/processed/*
+!dataset/processed/.gitkeep
+results/*
+!results/.gitkeep

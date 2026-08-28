@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760">
+<style>text{font-family:Arial,sans-serif;fill:#16323d}.t{font-weight:700;font-size:22px}.s{font-size:16px}.box{fill:#fff;stroke:#3c8175;stroke-width:2;rx:14}.aws{fill:#e7f5ef;stroke:#087f5b;stroke-width:2;rx:14}.arr{stroke:#52747a;stroke-width:3;fill:none;marker-end:url(#a)}</style><defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3z" fill="#52747a"/></marker></defs>
+<rect width="1400" height="760" fill="#f5faf8"/><text x="55" y="55" class="t">AWS Cloud Architecture - Federated Campus Energy Cloud</text>
+<rect class="box" x="55" y="170" width="180" height="100"/><text class="t" x="79" y="210">Smart meters</text><text class="s" x="79" y="240">Campus edge nodes</text>
+<rect class="aws" x="300" y="170" width="180" height="100"/><text class="t" x="330" y="210">Greengrass</text><text class="s" x="325" y="240">Local training + DP</text>
+<rect class="aws" x="545" y="170" width="160" height="100"/><text class="t" x="575" y="210">IoT Core</text><text class="s" x="567" y="240">MQTT / mTLS</text>
+<rect class="aws" x="770" y="170" width="160" height="100"/><text class="t" x="810" y="210">Lambda</text><text class="s" x="793" y="240">Schema validation</text>
+<rect class="aws" x="995" y="110" width="160" height="100"/><text class="t" x="1043" y="150">S3</text><text class="s" x="1013" y="180">Weights + artefacts</text>
+<rect class="aws" x="995" y="290" width="160" height="100"/><text class="t" x="1023" y="330">DynamoDB</text><text class="s" x="1010" y="360">Tariffs + metadata</text>
+<rect class="aws" x="770" y="450" width="200" height="105"/><text class="t" x="810" y="490">SageMaker</text><text class="s" x="792" y="520">Quality-weighted FedAvg</text>
+<rect class="aws" x="1030" y="450" width="205" height="105"/><text class="t" x="1080" y="490">Lambda</text><text class="s" x="1053" y="520">HVAC / EV optimiser</text>
+<rect class="aws" x="1030" y="620" width="205" height="80"/><text class="t" x="1050" y="665">API Gateway + Cognito</text>
+<rect class="aws" x="520" y="620" width="200" height="80"/><text class="t" x="540" y="655">CloudWatch + SNS</text><text class="s" x="550" y="680">Monitoring and alerts</text>
+<path class="arr" d="M235 220H300M480 220H545M705 220H770M930 220H995M850 270V450M930 500H1030M1115 390V450M1132 555V620M770 555L700 620"/>
+<text class="s" x="61" y="105">Raw telemetry stays local. Protected model updates flow through AWS for aggregation and tariff-aware control.</text>
+</svg>

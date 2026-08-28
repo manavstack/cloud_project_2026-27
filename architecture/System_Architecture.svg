@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650">
+<style>text{font-family:Arial,sans-serif;fill:#16323d}.t{font-weight:700;font-size:22px}.s{font-size:16px}.box{fill:#fff;stroke:#3c8175;stroke-width:2;rx:14}.n{fill:#e7f5ef;stroke:#087f5b;stroke-width:2;rx:14}.arr{stroke:#52747a;stroke-width:3;fill:none;marker-end:url(#a)}</style><defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3z" fill="#52747a"/></marker></defs>
+<rect width="1400" height="650" fill="#f5faf8"/><text x="55" y="55" class="t">Complete System Architecture - 15-minute Federated Energy Optimisation</text>
+<rect class="box" x="50" y="210" width="180" height="110"/><text class="t" x="83" y="252">Sensors</text><text class="s" x="69" y="282">Power, weather, occupancy</text>
+<rect class="n" x="300" y="210" width="185" height="110"/><text class="t" x="327" y="250">Edge learning</text><text class="s" x="320" y="280">CNN-LSTM / FT-ECP</text><text class="s" x="325" y="303">DP + secure update</text>
+<rect class="n" x="555" y="210" width="185" height="110"/><text class="t" x="580" y="250">Cloud round</text><text class="s" x="577" y="280">Validate + aggregate</text><text class="s" x="582" y="303">Global checkpoint</text>
+<rect class="n" x="810" y="210" width="185" height="110"/><text class="t" x="840" y="250">Forecast</text><text class="s" x="837" y="280">Demand curve and</text><text class="s" x="840" y="303">confidence metrics</text>
+<rect class="n" x="1065" y="210" width="185" height="110"/><text class="t" x="1092" y="250">Optimise</text><text class="s" x="1087" y="280">TOU-aware HVAC, EV</text><text class="s" x="1102" y="303">and battery schedule</text>
+<rect class="box" x="1065" y="450" width="185" height="100"/><text class="t" x="1093" y="490">BMS control</text><text class="s" x="1088" y="520">Actuation + override</text>
+<rect class="box" x="555" y="450" width="185" height="100"/><text class="t" x="577" y="490">Dashboard</text><text class="s" x="578" y="520">Managers, alerts, savings</text>
+<path class="arr" d="M230 265H300M485 265H555M740 265H810M995 265H1065M1157 320V450M1065 500H740M647 450V320"/>
+<text class="s" x="54" y="115">Closed-loop workflow: protected federated forecasts become explainable load-shifting actions while users retain an override path.</text>
+</svg>
