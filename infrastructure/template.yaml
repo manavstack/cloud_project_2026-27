@@ -1,0 +1,519 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Federated Campus Energy Cloud — Phase I
+  All AWS resources: Cognito, API Gateway (REST + WebSocket),
+  Lambda functions, DynamoDB tables, S3, SNS, IAM.
+
+# ─────────────────────────────────────────────────────────────────────────────
+Globals:
+  Function:
+    Runtime:      python3.12
+    MemorySize:   256
+    Timeout:      30
+    Environment:
+      Variables:
+        AWS_REGION:             !Ref AWS::Region
+        FORECASTS_TABLE:        !Ref ForecastsTable
+        FED_ROUNDS_TABLE:       !Ref FedRoundsTable
+        SCHEDULES_TABLE:        !Ref SchedulesTable
+        TARIFFS_TABLE:          !Ref TariffsTable
+        ALERTS_TABLE:           !Ref AlertsTable
+        WS_CONNECTIONS_TABLE:   !Ref WsConnectionsTable
+        EXPORT_BUCKET:          !Ref ExportBucket
+        WS_API_ENDPOINT:        !Sub 'https://${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${WebSocketStage}'
+
+# ─────────────────────────────────────────────────────────────────────────────
+Parameters:
+  StageName:
+    Type:    String
+    Default: prod
+
+  SageMakerEndpointName:
+    Type:    String
+    Default: ''
+    Description: 'Optional: SageMaker real-time endpoint name for live demand forecasting.'
+
+  IoTEndpoint:
+    Type:    String
+    Default: ''
+    Description: 'IoT Core ATS endpoint (e.g. abc-ats.iot.ap-south-1.amazonaws.com).'
+
+# ─────────────────────────────────────────────────────────────────────────────
+Resources:
+
+  # ── Cognito User Pool ────────────────────────────────────────────────────
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: campus-energy-users
+      AutoVerifiedAttributes: [email]
+      UsernameAttributes:     [email]
+      Policies:
+        PasswordPolicy:
+          MinimumLength:    8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers:   true
+          RequireSymbols:   false
+      Schema:
+        - Name:     email
+          Required: true
+          Mutable:  false
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName:                   campus-energy-dashboard
+      UserPoolId:                   !Ref UserPool
+      GenerateSecret:               false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      PreventUserExistenceErrors:   ENABLED
+      AccessTokenValidity:          8    # hours
+      IdTokenValidity:              8
+      RefreshTokenValidity:         30   # days
+
+  # ── DynamoDB Tables ──────────────────────────────────────────────────────
+  ForecastsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:            CampusEnergy-Forecasts
+      BillingMode:          PAY_PER_REQUEST
+      AttributeDefinitions: [{AttributeName: forecastId, AttributeType: S}]
+      KeySchema:            [{AttributeName: forecastId, KeyType: HASH}]
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  FedRoundsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:            CampusEnergy-FedRounds
+      BillingMode:          PAY_PER_REQUEST
+      AttributeDefinitions: [{AttributeName: roundId, AttributeType: S}]
+      KeySchema:            [{AttributeName: roundId, KeyType: HASH}]
+
+  SchedulesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:            CampusEnergy-Schedules
+      BillingMode:          PAY_PER_REQUEST
+      AttributeDefinitions: [{AttributeName: scheduleId, AttributeType: S}]
+      KeySchema:            [{AttributeName: scheduleId, KeyType: HASH}]
+
+  TariffsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:            CampusEnergy-Tariffs
+      BillingMode:          PAY_PER_REQUEST
+      AttributeDefinitions: [{AttributeName: tariffId, AttributeType: S}]
+      KeySchema:            [{AttributeName: tariffId, KeyType: HASH}]
+
+  AlertsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:            CampusEnergy-Alerts
+      BillingMode:          PAY_PER_REQUEST
+      AttributeDefinitions: [{AttributeName: alertId, AttributeType: S}]
+      KeySchema:            [{AttributeName: alertId, KeyType: HASH}]
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled:       true
+
+  WsConnectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:            CampusEnergy-WsConnections
+      BillingMode:          PAY_PER_REQUEST
+      AttributeDefinitions: [{AttributeName: connectionId, AttributeType: S}]
+      KeySchema:            [{AttributeName: connectionId, KeyType: HASH}]
+
+  # ── S3 Bucket for CSV exports ────────────────────────────────────────────
+  ExportBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'campus-energy-exports-${AWS::AccountId}-${AWS::Region}'
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins: ['*']
+            AllowedMethods: [GET]
+            AllowedHeaders: ['*']
+            MaxAge:         3600
+      LifecycleConfiguration:
+        Rules:
+          - Id:          delete-old-exports
+            Status:      Enabled
+            ExpirationInDays: 30
+
+  # ── SNS Topic for alerts ─────────────────────────────────────────────────
+  AlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: campus-energy-alerts
+      DisplayName: Campus Energy Alerts
+
+  # ── IAM Role for Lambda functions ────────────────────────────────────────
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: campus-energy-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: campus-energy-lambda-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                Resource:
+                  - !GetAtt ForecastsTable.Arn
+                  - !GetAtt FedRoundsTable.Arn
+                  - !GetAtt SchedulesTable.Arn
+                  - !GetAtt TariffsTable.Arn
+                  - !GetAtt AlertsTable.Arn
+                  - !GetAtt WsConnectionsTable.Arn
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject]
+                Resource: !Sub '${ExportBucket.Arn}/*'
+              - Effect: Allow
+                Action: iot:Publish
+                Resource: !Sub 'arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/campus/*'
+              - Effect: Allow
+                Action: sagemaker:InvokeEndpoint
+                Resource: '*'
+              - Effect: Allow
+                Action: execute-api:ManageConnections
+                Resource: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/*'
+
+  # ── Cognito Authorizer (shared) ──────────────────────────────────────────
+  CognitoAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name:               CognitoUserPool
+      RestApiId:          !Ref RestApi
+      Type:               COGNITO_USER_POOLS
+      IdentitySource:     method.request.header.Authorization
+      ProviderARNs:       [!GetAtt UserPool.Arn]
+
+  # ── API Gateway REST API ─────────────────────────────────────────────────
+  RestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name:        campus-energy-rest-api
+      StageName:   !Ref StageName
+      Cors:
+        AllowOrigin:  "'*'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowMethods: "'GET,POST,OPTIONS'"
+      Auth:
+        DefaultAuthorizer: MyCognitoAuthorizer
+        Authorizers:
+          MyCognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+
+  # ── API Gateway WebSocket API ────────────────────────────────────────────
+  WebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name:                      campus-energy-ws
+      ProtocolType:              WEBSOCKET
+      RouteSelectionExpression:  '$request.body.action'
+
+  WebSocketConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:     !Ref WebSocketApi
+      RouteKey:  $connect
+      Target:    !Sub 'integrations/${WsConnectIntegration}'
+
+  WsConnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:           !Ref WebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:  !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WsConnectFunction.Arn}/invocations'
+
+  WebSocketDisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:    !Ref WebSocketApi
+      RouteKey: $disconnect
+      Target:   !Sub 'integrations/${WsDisconnectIntegration}'
+
+  WsDisconnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:           !Ref WebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:  !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WsDisconnectFunction.Arn}/invocations'
+
+  WebSocketDeployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn: [WebSocketConnectRoute, WebSocketDisconnectRoute]
+    Properties:
+      ApiId: !Ref WebSocketApi
+
+  WebSocketStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId:         !Ref WebSocketApi
+      DeploymentId:  !Ref WebSocketDeployment
+      StageName:     !Ref StageName
+      AutoDeploy:    true
+
+  # ── Lambda Functions ─────────────────────────────────────────────────────
+  ForecastFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:   campus-energy-forecast
+      CodeUri:        ../src/backend/lambda/forecast/
+      Handler:        handler.handler
+      Role:           !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          SAGEMAKER_ENDPOINT_NAME: !Ref SageMakerEndpointName
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /forecast
+            Method:    GET
+        Options:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /forecast
+            Method:    OPTIONS
+            Auth:
+              Authorizer: NONE
+
+  FederationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: campus-energy-federation
+      CodeUri:      ../src/backend/lambda/federation/
+      Handler:      handler.handler
+      Role:         !GetAtt LambdaRole.Arn
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /federation
+            Method:    GET
+        Options:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /federation
+            Method:    OPTIONS
+            Auth:
+              Authorizer: NONE
+
+  ScheduleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: campus-energy-schedule
+      CodeUri:      ../src/backend/lambda/schedule/
+      Handler:      handler.handler
+      Role:         !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          IOT_ENDPOINT: !Ref IoTEndpoint
+          IOT_TOPIC:    campus/bms/action
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /schedule
+            Method:    GET
+        Post:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /schedule
+            Method:    POST
+        Options:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /schedule
+            Method:    OPTIONS
+            Auth:
+              Authorizer: NONE
+
+  TariffsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: campus-energy-tariffs
+      CodeUri:      ../src/backend/lambda/tariffs/
+      Handler:      handler.handler
+      Role:         !GetAtt LambdaRole.Arn
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /tariffs
+            Method:    GET
+        Options:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /tariffs
+            Method:    OPTIONS
+            Auth:
+              Authorizer: NONE
+
+  AlertsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: campus-energy-alerts
+      CodeUri:      ../src/backend/lambda/alerts/
+      Handler:      handler.handler
+      Role:         !GetAtt LambdaRole.Arn
+      Events:
+        Post:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /alerts
+            Method:    POST
+            Auth:
+              Authorizer: NONE   # SNS calls this directly (no JWT)
+      # Subscribe to the SNS topic
+      # (subscription URL confirmation is handled inside the Lambda)
+
+  ExportFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: campus-energy-export
+      CodeUri:      ../src/backend/lambda/export/
+      Handler:      handler.handler
+      Role:         !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          EXPORT_KEY: exports/federation_latest.csv
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /export
+            Method:    GET
+        Options:
+          Type: Api
+          Properties:
+            RestApiId: !Ref RestApi
+            Path:      /export
+            Method:    OPTIONS
+            Auth:
+              Authorizer: NONE
+
+  WsConnectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: campus-energy-ws-connect
+      CodeUri:      ../src/backend/lambda/websocket/
+      Handler:      connect.handler
+      Role:         !GetAtt LambdaRole.Arn
+
+  WsDisconnectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: campus-energy-ws-disconnect
+      CodeUri:      ../src/backend/lambda/websocket/
+      Handler:      disconnect.handler
+      Role:         !GetAtt LambdaRole.Arn
+
+  # ── Lambda permissions for API Gateway WebSocket ─────────────────────────
+  WsConnectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action:       lambda:InvokeFunction
+      FunctionName: !Ref WsConnectFunction
+      Principal:    apigateway.amazonaws.com
+      SourceArn:    !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*'
+
+  WsDisconnectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action:       lambda:InvokeFunction
+      FunctionName: !Ref WsDisconnectFunction
+      Principal:    apigateway.amazonaws.com
+      SourceArn:    !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*'
+
+  # ── SNS subscription to Alerts Lambda ────────────────────────────────────
+  AlertsSnsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn:  !Ref AlertsTopic
+      Protocol:  https
+      Endpoint:  !Sub 'https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/alerts'
+
+  # ── CloudWatch Log Groups ────────────────────────────────────────────────
+  ForecastLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:     !Sub '/aws/lambda/${ForecastFunction}'
+      RetentionInDays:  14
+
+  FederationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:     !Sub '/aws/lambda/${FederationFunction}'
+      RetentionInDays:  14
+
+# ─────────────────────────────────────────────────────────────────────────────
+Outputs:
+  UserPoolId:
+    Description: Cognito User Pool ID — paste into aws-config.js
+    Value:        !Ref UserPool
+    Export:
+      Name: !Sub '${AWS::StackName}-UserPoolId'
+
+  UserPoolClientId:
+    Description: Cognito App Client ID — paste into aws-config.js
+    Value:        !Ref UserPoolClient
+    Export:
+      Name: !Sub '${AWS::StackName}-UserPoolClientId'
+
+  RestApiUrl:
+    Description: API Gateway REST URL — paste into aws-config.js
+    Value:        !Sub 'https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-RestApiUrl'
+
+  WebSocketApiUrl:
+    Description: API Gateway WebSocket URL — paste into aws-config.js
+    Value:        !Sub 'wss://${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-WebSocketApiUrl'
+
+  ExportBucketName:
+    Description: S3 export bucket name — paste into aws-config.js
+    Value:        !Ref ExportBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-ExportBucket'
+
+  AlertsTopicArn:
+    Description: SNS topic ARN for peak-demand and federation alerts
+    Value:        !Ref AlertsTopic

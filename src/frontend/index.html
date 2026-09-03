@@ -9,8 +9,49 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+
+  <!--
+    AWS Amplify is loaded via CDN in app.js only when Live Mode is active.
+    In Demo Mode, no external AWS dependencies are loaded.
+    amazon-cognito-identity-js is bundled inside Amplify.
+  -->
 </head>
 <body>
+
+<!-- ─── COGNITO LOGIN MODAL ──────────────────────────────────────── -->
+<div class="modal-overlay" id="login-overlay" role="dialog" aria-modal="true" aria-labelledby="login-title" hidden>
+  <div class="modal">
+    <div class="modal-brand">
+      <svg class="modal-logo" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+        <circle cx="18" cy="18" r="17" stroke="var(--green)" stroke-width="2"/>
+        <path d="M18 8v10l6 4" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="18" cy="18" r="3" fill="var(--green)"/>
+      </svg>
+      <div>
+        <p class="eyebrow">FEDERATED CAMPUS ENERGY CLOUD</p>
+        <h2 id="login-title">Sign in</h2>
+      </div>
+    </div>
+    <p class="modal-sub">Authenticated via Amazon Cognito. Your session expires after 8 hours.</p>
+
+    <form id="login-form" novalidate>
+      <div class="field-group">
+        <label for="login-email">Email address</label>
+        <input type="email" id="login-email" name="email" autocomplete="email" required placeholder="facility@university.edu">
+      </div>
+      <div class="field-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" name="password" autocomplete="current-password" required placeholder="••••••••">
+      </div>
+      <p class="login-error" id="login-error" role="alert" aria-live="assertive"></p>
+      <button class="btn btn--primary btn--full" type="submit" id="login-btn">Sign in</button>
+    </form>
+
+    <p class="modal-footer-note">
+      New user? Ask your administrator to add you to the Cognito user pool.
+    </p>
+  </div>
+</div>
 
 <!-- ─── TOP BAR ─────────────────────────────────────────────────── -->
 <header class="topbar" role="banner">
@@ -26,28 +67,42 @@
     </div>
   </div>
   <nav class="topbar-nav" aria-label="Dashboard sections">
-    <a href="#overview" class="nav-link active" id="nav-overview">Overview</a>
-    <a href="#forecast" class="nav-link" id="nav-forecast">Forecast</a>
+    <a href="#overview"   class="nav-link active" id="nav-overview">Overview</a>
+    <a href="#forecast"   class="nav-link" id="nav-forecast">Forecast</a>
     <a href="#federation" class="nav-link" id="nav-federation">Federation</a>
-    <a href="#schedule" class="nav-link" id="nav-schedule">Schedule</a>
+    <a href="#schedule"   class="nav-link" id="nav-schedule">Schedule</a>
   </nav>
   <div class="topbar-right">
+    <!-- Mode pill: Demo or Live -->
+    <span class="mode-pill" id="mode-pill" aria-label="Connection mode">Demo</span>
+
     <div class="live-badge" id="live-indicator" aria-live="polite">
-      <span class="pulse-dot"></span><span id="live-text">Live telemetry</span>
+      <span class="pulse-dot" id="pulse-dot"></span>
+      <span id="live-text">Demo Mode</span>
     </div>
+
     <button class="icon-btn" id="refresh-all" type="button" aria-label="Refresh all data" title="Refresh all data">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <path d="M4 10a6 6 0 1 0 1.5-4"/>
         <path d="M4 4v3h3"/>
       </svg>
     </button>
+
+    <!-- Sign-out button (visible in Live Mode only) -->
+    <button class="icon-btn" id="signout-btn" type="button" aria-label="Sign out" title="Sign out" hidden>
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M13 3h4a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-4M9 14l4-4-4-4M13 10H3"/>
+      </svg>
+    </button>
   </div>
 </header>
 
-<!-- ─── HERO ALERT BANNER ────────────────────────────────────────── -->
+<!-- ─── ALERT BANNER ─────────────────────────────────────────────── -->
 <div class="alert-banner" id="alert-banner" role="alert" aria-live="assertive">
-  <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
-  <span>Peak demand forecast exceeds comfort threshold at <strong>18:00</strong> — HVAC pre-cooling recommended by 16:30.</span>
+  <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+  </svg>
+  <span id="alert-text">Peak demand forecast exceeds comfort threshold at <strong>18:00</strong> — HVAC pre-cooling recommended by 16:30.</span>
   <button class="alert-dismiss" type="button" id="dismiss-alert" aria-label="Dismiss alert">×</button>
 </div>
 
@@ -56,6 +111,7 @@
   <!-- ─── KPI STRIP ──────────────────────────────────────────────── -->
   <section class="kpi-strip" id="overview" aria-labelledby="kpi-heading">
     <h2 id="kpi-heading" class="sr-only">Key performance indicators</h2>
+
     <article class="kpi-card" id="kpi-demand">
       <div class="kpi-icon kpi-icon--blue">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -65,8 +121,9 @@
         <strong class="kpi-value" id="val-demand">842 kW</strong>
         <small class="kpi-sub">Next 15-minute interval</small>
       </div>
-      <div class="kpi-delta kpi-delta--warn" id="delta-demand" aria-label="Change">↑ 3.2%</div>
+      <div class="kpi-delta kpi-delta--warn" id="delta-demand">↑ 3.2%</div>
     </article>
+
     <article class="kpi-card" id="kpi-peak">
       <div class="kpi-icon kpi-icon--green">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -78,6 +135,7 @@
       </div>
       <div class="kpi-delta kpi-delta--pos" id="delta-peak">↑ Target: 20%</div>
     </article>
+
     <article class="kpi-card" id="kpi-savings">
       <div class="kpi-icon kpi-icon--lime">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -89,6 +147,7 @@
       </div>
       <div class="kpi-delta kpi-delta--pos" id="delta-savings">↑ ₹ 1,230 vs yesterday</div>
     </article>
+
     <article class="kpi-card" id="kpi-clients">
       <div class="kpi-icon kpi-icon--purple">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
@@ -100,6 +159,7 @@
       </div>
       <div class="kpi-delta kpi-delta--pos" id="delta-clients">Round 24 — All validated</div>
     </article>
+
     <article class="kpi-card" id="kpi-privacy">
       <div class="kpi-icon kpi-icon--teal">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -125,8 +185,8 @@
         </div>
         <div class="panel-actions">
           <div class="tab-group" role="tablist" aria-label="Chart period">
-            <button role="tab" aria-selected="true" id="tab-today" class="tab tab--active">Today</button>
-            <button role="tab" aria-selected="false" id="tab-week" class="tab">7 days</button>
+            <button role="tab" aria-selected="true"  id="tab-today" class="tab tab--active">Today</button>
+            <button role="tab" aria-selected="false" id="tab-week"  class="tab">7 days</button>
             <button role="tab" aria-selected="false" id="tab-month" class="tab">30 days</button>
           </div>
           <span class="badge badge--warn">Peak at 18:00</span>
@@ -166,14 +226,14 @@
     <!-- Right column -->
     <div class="panel-col">
 
-      <!-- Optimisation actions -->
+      <!-- Optimisation schedule -->
       <section class="panel" id="schedule" aria-labelledby="opt-heading">
         <div class="panel-head">
           <div>
             <p class="eyebrow">OPTIMISATION ACTIONS</p>
             <h2 id="opt-heading">Recommended schedule</h2>
           </div>
-          <span class="badge badge--success">Approved</span>
+          <span class="badge badge--success" id="schedule-badge">Approved</span>
         </div>
         <ul class="actions-list" id="actions-list" aria-label="Scheduled actions">
           <li class="action-item">
@@ -184,7 +244,7 @@
               <span class="action-name">HVAC pre-cooling</span>
               <small>Lower set-point 1°C before peak</small>
             </div>
-            <b class="action-time">16:30 – 17:15</b>
+            <b class="action-time" id="act-hvac-time">16:30 – 17:15</b>
           </li>
           <li class="action-item">
             <div class="action-icon action-icon--ev">
@@ -194,7 +254,7 @@
               <span class="action-name">EV charging cap</span>
               <small>Throttle to 40% during peak hour</small>
             </div>
-            <b class="action-time">40% at 18:00</b>
+            <b class="action-time" id="act-ev-time">40% at 18:00</b>
           </li>
           <li class="action-item">
             <div class="action-icon action-icon--battery">
@@ -204,7 +264,7 @@
               <span class="action-name">Battery dispatch</span>
               <small>Discharge reserve to grid tie-in</small>
             </div>
-            <b class="action-time">120 kW at 18:00</b>
+            <b class="action-time" id="act-bat-time">120 kW at 18:00</b>
           </li>
         </ul>
         <div class="action-footer">
@@ -221,7 +281,7 @@
             <h2 id="privacy-heading">Differential privacy</h2>
           </div>
         </div>
-        <div class="privacy-meters">
+        <div class="privacy-meters" id="privacy-meters">
           <div class="privacy-row">
             <span class="privacy-label">Engineering Block</span>
             <div class="privacy-bar-wrap" role="meter" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" aria-label="Engineering Block epsilon 1.0 out of 2.0">
@@ -268,11 +328,11 @@
   <section class="panel panel--full" id="federation" aria-labelledby="fed-heading">
     <div class="panel-head">
       <div>
-        <p class="eyebrow">FEDERATED ROUND 24</p>
+        <p class="eyebrow" id="fed-round-label">FEDERATED ROUND 24</p>
         <h2 id="fed-heading">Campus participation</h2>
       </div>
       <div class="panel-actions">
-        <span class="badge badge--success">All validated</span>
+        <span class="badge badge--success" id="fed-badge">All validated</span>
         <button class="btn btn--ghost" type="button" id="export-btn">Export CSV</button>
       </div>
     </div>
@@ -290,56 +350,17 @@
           </tr>
         </thead>
         <tbody id="federation-tbody">
-          <tr>
-            <td><span class="facility-dot facility-dot--green"></span>Engineering Block</td>
-            <td><div class="quality-bar-wrap"><div class="quality-bar" style="width:94%"></div><span>0.94</span></div></td>
-            <td>1.0</td>
-            <td>12,480</td>
-            <td>0.32</td>
-            <td>1.2 s</td>
-            <td><span class="status-pill status-pill--ok">Validated</span></td>
-          </tr>
-          <tr>
-            <td><span class="facility-dot facility-dot--green"></span>Library</td>
-            <td><div class="quality-bar-wrap"><div class="quality-bar" style="width:91%"></div><span>0.91</span></div></td>
-            <td>1.0</td>
-            <td>9,320</td>
-            <td>0.28</td>
-            <td>0.9 s</td>
-            <td><span class="status-pill status-pill--ok">Validated</span></td>
-          </tr>
-          <tr>
-            <td><span class="facility-dot facility-dot--green"></span>Hostel Complex</td>
-            <td><div class="quality-bar-wrap"><div class="quality-bar" style="width:88%"></div><span>0.88</span></div></td>
-            <td>1.2</td>
-            <td>14,760</td>
-            <td>0.21</td>
-            <td>1.7 s</td>
-            <td><span class="status-pill status-pill--ok">Validated</span></td>
-          </tr>
-          <tr>
-            <td><span class="facility-dot facility-dot--green"></span>Science Labs</td>
-            <td><div class="quality-bar-wrap"><div class="quality-bar" style="width:95%"></div><span>0.95</span></div></td>
-            <td>0.9</td>
-            <td>8,100</td>
-            <td>0.11</td>
-            <td>0.8 s</td>
-            <td><span class="status-pill status-pill--ok">Validated</span></td>
-          </tr>
-          <tr>
-            <td><span class="facility-dot facility-dot--green"></span>Admin Block</td>
-            <td><div class="quality-bar-wrap"><div class="quality-bar" style="width:89%"></div><span>0.89</span></div></td>
-            <td>1.1</td>
-            <td>6,940</td>
-            <td>0.08</td>
-            <td>1.1 s</td>
-            <td><span class="status-pill status-pill--ok">Validated</span></td>
-          </tr>
+          <tr><td><span class="facility-dot facility-dot--green"></span>Engineering Block</td><td><div class="quality-bar-wrap"><div class="quality-bar" style="width:94%"></div><span>0.94</span></div></td><td>1.0</td><td>12,480</td><td>0.32</td><td>1.2 s</td><td><span class="status-pill status-pill--ok">Validated</span></td></tr>
+          <tr><td><span class="facility-dot facility-dot--green"></span>Library</td><td><div class="quality-bar-wrap"><div class="quality-bar" style="width:91%"></div><span>0.91</span></div></td><td>1.0</td><td>9,320</td><td>0.28</td><td>0.9 s</td><td><span class="status-pill status-pill--ok">Validated</span></td></tr>
+          <tr><td><span class="facility-dot facility-dot--green"></span>Hostel Complex</td><td><div class="quality-bar-wrap"><div class="quality-bar" style="width:88%"></div><span>0.88</span></div></td><td>1.2</td><td>14,760</td><td>0.21</td><td>1.7 s</td><td><span class="status-pill status-pill--ok">Validated</span></td></tr>
+          <tr><td><span class="facility-dot facility-dot--green"></span>Science Labs</td><td><div class="quality-bar-wrap"><div class="quality-bar" style="width:95%"></div><span>0.95</span></div></td><td>0.9</td><td>8,100</td><td>0.11</td><td>0.8 s</td><td><span class="status-pill status-pill--ok">Validated</span></td></tr>
+          <tr><td><span class="facility-dot facility-dot--green"></span>Admin Block</td><td><div class="quality-bar-wrap"><div class="quality-bar" style="width:89%"></div><span>0.89</span></div></td><td>1.1</td><td>6,940</td><td>0.08</td><td>1.1 s</td><td><span class="status-pill status-pill--ok">Validated</span></td></tr>
         </tbody>
       </table>
     </div>
     <p class="table-footer">
-      Aggregation: SageMaker quality-weighted FedAvg · Global checkpoint stored in S3 · Next round in <strong id="next-round-timer">04:38</strong>
+      Aggregation: SageMaker quality-weighted FedAvg · Global checkpoint stored in S3 ·
+      Next round in <strong id="next-round-timer">04:38</strong>
     </p>
   </section>
 
@@ -347,63 +368,31 @@
   <div class="mini-row">
     <section class="mini-card" aria-label="Model accuracy">
       <p class="eyebrow">MODEL ACCURACY</p>
-      <div class="mini-stat-row">
-        <span>MAE</span><strong>18.4 kW</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>RMSE</span><strong>24.1 kW</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>CV-RMSE</span><strong>17.3%</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>MAPE</span><strong>4.6%</strong>
-      </div>
+      <div class="mini-stat-row"><span>MAE</span><strong id="stat-mae">18.4 kW</strong></div>
+      <div class="mini-stat-row"><span>RMSE</span><strong id="stat-rmse">24.1 kW</strong></div>
+      <div class="mini-stat-row"><span>CV-RMSE</span><strong id="stat-cvrmse">17.3%</strong></div>
+      <div class="mini-stat-row"><span>MAPE</span><strong id="stat-mape">4.6%</strong></div>
     </section>
     <section class="mini-card" aria-label="AWS pipeline health">
       <p class="eyebrow">AWS PIPELINE HEALTH</p>
-      <div class="mini-stat-row">
-        <span>IoT Core</span><span class="health-dot health-dot--ok">●</span><strong>Healthy</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>SageMaker</span><span class="health-dot health-dot--ok">●</span><strong>Aggregating</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>Lambda optimiser</span><span class="health-dot health-dot--ok">●</span><strong>Healthy</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>CloudWatch</span><span class="health-dot health-dot--ok">●</span><strong>0 alarms</strong>
-      </div>
+      <div class="mini-stat-row"><span>IoT Core</span><span class="health-dot health-dot--ok">●</span><strong id="health-iot">Healthy</strong></div>
+      <div class="mini-stat-row"><span>SageMaker</span><span class="health-dot health-dot--ok">●</span><strong id="health-sm">Aggregating</strong></div>
+      <div class="mini-stat-row"><span>Lambda optimiser</span><span class="health-dot health-dot--ok">●</span><strong id="health-lambda">Healthy</strong></div>
+      <div class="mini-stat-row"><span>CloudWatch</span><span class="health-dot health-dot--ok">●</span><strong id="health-cw">0 alarms</strong></div>
     </section>
     <section class="mini-card" aria-label="Cold-start status">
       <p class="eyebrow">COLD-START STATUS</p>
-      <div class="mini-stat-row">
-        <span>New facility</span><strong>Sports Centre</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>Fine-tune rounds</span><strong>3 / 5</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>CV-RMSE (current)</span><strong>22.8%</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>Target</span><strong>&lt; 25%  ✓</strong>
-      </div>
+      <div class="mini-stat-row"><span>New facility</span><strong>Sports Centre</strong></div>
+      <div class="mini-stat-row"><span>Fine-tune rounds</span><strong>3 / 5</strong></div>
+      <div class="mini-stat-row"><span>CV-RMSE (current)</span><strong>22.8%</strong></div>
+      <div class="mini-stat-row"><span>Target</span><strong>&lt; 25%  ✓</strong></div>
     </section>
     <section class="mini-card" aria-label="Tariff window">
       <p class="eyebrow">TARIFF WINDOW</p>
-      <div class="mini-stat-row">
-        <span>Current rate</span><strong>₹ 6.50/kWh</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>Peak rate (18-19)</span><strong>₹ 12.40/kWh</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>Off-peak rate</span><strong>₹ 3.20/kWh</strong>
-      </div>
-      <div class="mini-stat-row">
-        <span>Schedule source</span><strong>DynamoDB tariffs</strong>
-      </div>
+      <div class="mini-stat-row"><span>Current rate</span><strong id="tariff-current">₹ 6.50/kWh</strong></div>
+      <div class="mini-stat-row"><span>Peak rate</span><strong id="tariff-peak">₹ 12.40/kWh</strong></div>
+      <div class="mini-stat-row"><span>Off-peak rate</span><strong id="tariff-offpeak">₹ 3.20/kWh</strong></div>
+      <div class="mini-stat-row"><span>Schedule source</span><strong id="tariff-source">DynamoDB tariffs</strong></div>
     </section>
   </div>
 
@@ -412,10 +401,12 @@
 <footer class="site-footer" role="contentinfo">
   <p>
     Federated Campus Energy Cloud · Student 1 prototype · Phase I ·
-    <span id="data-notice">Values are <em>simulated</em> — live AWS integration pending Phase II.</span>
+    <span id="data-notice">Values are <em id="data-mode-text">simulated</em> — live AWS integration pending.</span>
   </p>
 </footer>
 
+<!-- Load config first, then app logic -->
+<script src="aws-config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
