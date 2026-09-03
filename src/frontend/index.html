@@ -1,7 +1,421 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Campus Energy Operations</title><link rel="stylesheet" href="styles.css"></head>
-<body><header class="topbar"><div><p class="eyebrow">FEDERATED CAMPUS ENERGY CLOUD</p><h1>Operations dashboard</h1></div><div class="status"><span></span>Live telemetry</div></header><main>
-<section class="hero"><div><p class="eyebrow">15-MINUTE FORECAST WINDOW</p><h2>Keep the next peak inside the comfort budget.</h2><p>Protected edge updates are aggregated without collecting raw campus telemetry.</p></div><button id="refresh" type="button">Refresh forecast</button></section>
-<section class="metrics" aria-label="Energy metrics"><article><p>Predicted demand</p><strong id="demand">842 kW</strong><small>Next interval</small></article><article><p>Peak reduction</p><strong>24.2%</strong><small>Against baseline</small></article><article><p>Today's savings</p><strong>₹8,460</strong><small>Time-of-use schedule</small></article><article><p>Active edge clients</p><strong>5 / 5</strong><small>Protected updates received</small></article></section>
-<section class="grid"><article class="panel"><div class="panel-head"><div><p class="eyebrow">DEMAND CURVE</p><h2>Forecast vs. target</h2></div><span class="badge">18:00 peak</span></div><div class="chart"><div class="target"></div><div class="bars"><i style="height:36%"></i><i style="height:47%"></i><i style="height:58%"></i><i style="height:76%"></i><i class="hot" style="height:90%"></i><i style="height:67%"></i><i style="height:51%"></i></div></div><div class="axis"><span>12:00</span><span>14:00</span><span>16:00</span><span>18:00</span><span>20:00</span></div></article><article class="panel"><p class="eyebrow">OPTIMISATION ACTIONS</p><h2>Recommended schedule</h2><ul class="actions"><li><span>HVAC pre-cooling</span><b>16:30-17:15</b></li><li><span>EV charging cap</span><b>40% at 18:00</b></li><li><span>Battery dispatch</span><b>120 kW at 18:00</b></li></ul><button class="secondary" type="button">View control policy</button></article></section>
-<section class="panel sites"><div class="panel-head"><div><p class="eyebrow">FEDERATED ROUND 24</p><h2>Campus participation</h2></div><span class="badge success">All validated</span></div><table><thead><tr><th>Facility</th><th>Update quality</th><th>Privacy</th><th>Status</th></tr></thead><tbody><tr><td>Engineering Block</td><td>0.94</td><td>ε 1.0</td><td>Validated</td></tr><tr><td>Library</td><td>0.91</td><td>ε 1.0</td><td>Validated</td></tr><tr><td>Hostel Complex</td><td>0.88</td><td>ε 1.2</td><td>Validated</td></tr></tbody></table></section></main><script src="app.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campus Energy Operations – Federated Campus Energy Cloud</title>
+  <meta name="description" content="Real-time facility operations dashboard for privacy-preserving federated energy-demand forecasting and flexible-load scheduling across smart university campuses.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ─── TOP BAR ─────────────────────────────────────────────────── -->
+<header class="topbar" role="banner">
+  <div class="topbar-brand">
+    <svg class="logo-icon" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+      <circle cx="18" cy="18" r="17" stroke="var(--green)" stroke-width="2"/>
+      <path d="M18 8v10l6 4" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="18" cy="18" r="3" fill="var(--green)"/>
+    </svg>
+    <div>
+      <p class="eyebrow">FEDERATED CAMPUS ENERGY CLOUD</p>
+      <h1>Operations Dashboard</h1>
+    </div>
+  </div>
+  <nav class="topbar-nav" aria-label="Dashboard sections">
+    <a href="#overview" class="nav-link active" id="nav-overview">Overview</a>
+    <a href="#forecast" class="nav-link" id="nav-forecast">Forecast</a>
+    <a href="#federation" class="nav-link" id="nav-federation">Federation</a>
+    <a href="#schedule" class="nav-link" id="nav-schedule">Schedule</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="live-badge" id="live-indicator" aria-live="polite">
+      <span class="pulse-dot"></span><span id="live-text">Live telemetry</span>
+    </div>
+    <button class="icon-btn" id="refresh-all" type="button" aria-label="Refresh all data" title="Refresh all data">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M4 10a6 6 0 1 0 1.5-4"/>
+        <path d="M4 4v3h3"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- ─── HERO ALERT BANNER ────────────────────────────────────────── -->
+<div class="alert-banner" id="alert-banner" role="alert" aria-live="assertive">
+  <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+  <span>Peak demand forecast exceeds comfort threshold at <strong>18:00</strong> — HVAC pre-cooling recommended by 16:30.</span>
+  <button class="alert-dismiss" type="button" id="dismiss-alert" aria-label="Dismiss alert">×</button>
+</div>
+
+<main id="main-content">
+
+  <!-- ─── KPI STRIP ──────────────────────────────────────────────── -->
+  <section class="kpi-strip" id="overview" aria-labelledby="kpi-heading">
+    <h2 id="kpi-heading" class="sr-only">Key performance indicators</h2>
+    <article class="kpi-card" id="kpi-demand">
+      <div class="kpi-icon kpi-icon--blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div>
+        <p class="kpi-label">Predicted demand</p>
+        <strong class="kpi-value" id="val-demand">842 kW</strong>
+        <small class="kpi-sub">Next 15-minute interval</small>
+      </div>
+      <div class="kpi-delta kpi-delta--warn" id="delta-demand" aria-label="Change">↑ 3.2%</div>
+    </article>
+    <article class="kpi-card" id="kpi-peak">
+      <div class="kpi-icon kpi-icon--green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div>
+        <p class="kpi-label">Peak reduction</p>
+        <strong class="kpi-value" id="val-peak">24.2%</strong>
+        <small class="kpi-sub">Against unscheduled baseline</small>
+      </div>
+      <div class="kpi-delta kpi-delta--pos" id="delta-peak">↑ Target: 20%</div>
+    </article>
+    <article class="kpi-card" id="kpi-savings">
+      <div class="kpi-icon kpi-icon--lime">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div>
+        <p class="kpi-label">Today's savings</p>
+        <strong class="kpi-value" id="val-savings">₹ 8,460</strong>
+        <small class="kpi-sub">Time-of-use schedule</small>
+      </div>
+      <div class="kpi-delta kpi-delta--pos" id="delta-savings">↑ ₹ 1,230 vs yesterday</div>
+    </article>
+    <article class="kpi-card" id="kpi-clients">
+      <div class="kpi-icon kpi-icon--purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
+      </div>
+      <div>
+        <p class="kpi-label">Active edge clients</p>
+        <strong class="kpi-value" id="val-clients">5 / 5</strong>
+        <small class="kpi-sub">Protected updates received</small>
+      </div>
+      <div class="kpi-delta kpi-delta--pos" id="delta-clients">Round 24 — All validated</div>
+    </article>
+    <article class="kpi-card" id="kpi-privacy">
+      <div class="kpi-icon kpi-icon--teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <p class="kpi-label">Privacy budget</p>
+        <strong class="kpi-value" id="val-privacy">ε = 1.05</strong>
+        <small class="kpi-sub">Avg. differential privacy</small>
+      </div>
+      <div class="kpi-delta kpi-delta--pos" id="delta-privacy">Within tolerance</div>
+    </article>
+  </section>
+
+  <!-- ─── MAIN GRID ─────────────────────────────────────────────── -->
+  <div class="dashboard-grid">
+
+    <!-- Demand forecast chart -->
+    <section class="panel panel--wide" id="forecast" aria-labelledby="chart-heading">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">DEMAND CURVE</p>
+          <h2 id="chart-heading">Forecast vs. target</h2>
+        </div>
+        <div class="panel-actions">
+          <div class="tab-group" role="tablist" aria-label="Chart period">
+            <button role="tab" aria-selected="true" id="tab-today" class="tab tab--active">Today</button>
+            <button role="tab" aria-selected="false" id="tab-week" class="tab">7 days</button>
+            <button role="tab" aria-selected="false" id="tab-month" class="tab">30 days</button>
+          </div>
+          <span class="badge badge--warn">Peak at 18:00</span>
+        </div>
+      </div>
+
+      <div class="chart-wrap" role="img" aria-label="Bar chart showing hourly demand forecast with peak at 18:00">
+        <div class="chart-y-axis" aria-hidden="true">
+          <span>1100 kW</span><span>825 kW</span><span>550 kW</span><span>275 kW</span><span>0</span>
+        </div>
+        <div class="chart-inner">
+          <div class="chart-target-line" aria-hidden="true"><span>Target ceiling: 900 kW</span></div>
+          <div class="chart-bars" id="chart-bars" aria-hidden="true">
+            <div class="bar-col"><i class="bar" style="--h:36%"></i><span>12</span></div>
+            <div class="bar-col"><i class="bar" style="--h:47%"></i><span>13</span></div>
+            <div class="bar-col"><i class="bar" style="--h:58%"></i><span>14</span></div>
+            <div class="bar-col"><i class="bar" style="--h:66%"></i><span>15</span></div>
+            <div class="bar-col"><i class="bar" style="--h:72%"></i><span>16</span></div>
+            <div class="bar-col"><i class="bar" style="--h:84%"></i><span>17</span></div>
+            <div class="bar-col"><i class="bar bar--hot" style="--h:97%"><span class="bar-tooltip">842 kW — exceeds target</span></i><span>18</span></div>
+            <div class="bar-col"><i class="bar" style="--h:79%"></i><span>19</span></div>
+            <div class="bar-col"><i class="bar" style="--h:63%"></i><span>20</span></div>
+            <div class="bar-col"><i class="bar" style="--h:51%"></i><span>21</span></div>
+            <div class="bar-col"><i class="bar" style="--h:41%"></i><span>22</span></div>
+            <div class="bar-col"><i class="bar bar--forecast" style="--h:68%"></i><span>23</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-legend" aria-hidden="true">
+        <span class="legend-swatch legend-swatch--actual"></span> Actual / federated forecast
+        <span class="legend-swatch legend-swatch--hot"></span> Exceeds ceiling
+        <span class="legend-swatch legend-swatch--forecast"></span> Projected
+        <span class="legend-swatch legend-swatch--target"></span> Target ceiling
+      </div>
+    </section>
+
+    <!-- Right column -->
+    <div class="panel-col">
+
+      <!-- Optimisation actions -->
+      <section class="panel" id="schedule" aria-labelledby="opt-heading">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">OPTIMISATION ACTIONS</p>
+            <h2 id="opt-heading">Recommended schedule</h2>
+          </div>
+          <span class="badge badge--success">Approved</span>
+        </div>
+        <ul class="actions-list" id="actions-list" aria-label="Scheduled actions">
+          <li class="action-item">
+            <div class="action-icon action-icon--hvac">
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 14.5A6.5 6.5 0 1110 3.5a6.5 6.5 0 010 13z"/><path d="M10 6a4 4 0 100 8 4 4 0 000-8z"/></svg>
+            </div>
+            <div class="action-body">
+              <span class="action-name">HVAC pre-cooling</span>
+              <small>Lower set-point 1°C before peak</small>
+            </div>
+            <b class="action-time">16:30 – 17:15</b>
+          </li>
+          <li class="action-item">
+            <div class="action-icon action-icon--ev">
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 2H5l-2 9h5l-2 9 11-11h-6l2-7z"/></svg>
+            </div>
+            <div class="action-body">
+              <span class="action-name">EV charging cap</span>
+              <small>Throttle to 40% during peak hour</small>
+            </div>
+            <b class="action-time">40% at 18:00</b>
+          </li>
+          <li class="action-item">
+            <div class="action-icon action-icon--battery">
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><rect x="2" y="7" width="14" height="8" rx="1.5"/><path d="M18 10v2M3 11h8"/></svg>
+            </div>
+            <div class="action-body">
+              <span class="action-name">Battery dispatch</span>
+              <small>Discharge reserve to grid tie-in</small>
+            </div>
+            <b class="action-time">120 kW at 18:00</b>
+          </li>
+        </ul>
+        <div class="action-footer">
+          <button class="btn btn--secondary" type="button" id="view-policy-btn">View control policy</button>
+          <button class="btn btn--primary" type="button" id="apply-schedule-btn">Apply schedule</button>
+        </div>
+      </section>
+
+      <!-- Privacy status -->
+      <section class="panel panel--privacy" aria-labelledby="privacy-heading">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">PRIVACY STATUS</p>
+            <h2 id="privacy-heading">Differential privacy</h2>
+          </div>
+        </div>
+        <div class="privacy-meters">
+          <div class="privacy-row">
+            <span class="privacy-label">Engineering Block</span>
+            <div class="privacy-bar-wrap" role="meter" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" aria-label="Engineering Block epsilon 1.0 out of 2.0">
+              <div class="privacy-bar" style="--w:50%"></div>
+            </div>
+            <span class="privacy-val">ε 1.0</span>
+          </div>
+          <div class="privacy-row">
+            <span class="privacy-label">Library</span>
+            <div class="privacy-bar-wrap" role="meter" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" aria-label="Library epsilon 1.0 out of 2.0">
+              <div class="privacy-bar" style="--w:50%"></div>
+            </div>
+            <span class="privacy-val">ε 1.0</span>
+          </div>
+          <div class="privacy-row">
+            <span class="privacy-label">Hostel Complex</span>
+            <div class="privacy-bar-wrap" role="meter" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" aria-label="Hostel Complex epsilon 1.2 out of 2.0">
+              <div class="privacy-bar privacy-bar--warn" style="--w:60%"></div>
+            </div>
+            <span class="privacy-val">ε 1.2</span>
+          </div>
+          <div class="privacy-row">
+            <span class="privacy-label">Science Labs</span>
+            <div class="privacy-bar-wrap" role="meter" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" aria-label="Science Labs epsilon 0.9 out of 2.0">
+              <div class="privacy-bar" style="--w:45%"></div>
+            </div>
+            <span class="privacy-val">ε 0.9</span>
+          </div>
+          <div class="privacy-row">
+            <span class="privacy-label">Admin Block</span>
+            <div class="privacy-bar-wrap" role="meter" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100" aria-label="Admin Block epsilon 1.1 out of 2.0">
+              <div class="privacy-bar" style="--w:55%"></div>
+            </div>
+            <span class="privacy-val">ε 1.1</span>
+          </div>
+        </div>
+        <p class="privacy-note">Budget cap: ε = 2.0 per round. Gaussian noise added locally before transmission.</p>
+      </section>
+    </div>
+
+  </div><!-- /dashboard-grid -->
+
+  <!-- ─── FEDERATION TABLE ─────────────────────────────────────── -->
+  <section class="panel panel--full" id="federation" aria-labelledby="fed-heading">
+    <div class="panel-head">
+      <div>
+        <p class="eyebrow">FEDERATED ROUND 24</p>
+        <h2 id="fed-heading">Campus participation</h2>
+      </div>
+      <div class="panel-actions">
+        <span class="badge badge--success">All validated</span>
+        <button class="btn btn--ghost" type="button" id="export-btn">Export CSV</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table id="federation-table" aria-label="Campus participation table">
+        <thead>
+          <tr>
+            <th scope="col">Facility</th>
+            <th scope="col">Update quality</th>
+            <th scope="col">Privacy ε</th>
+            <th scope="col">Data samples</th>
+            <th scope="col">Aggregation weight</th>
+            <th scope="col">Latency</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody id="federation-tbody">
+          <tr>
+            <td><span class="facility-dot facility-dot--green"></span>Engineering Block</td>
+            <td><div class="quality-bar-wrap"><div class="quality-bar" style="width:94%"></div><span>0.94</span></div></td>
+            <td>1.0</td>
+            <td>12,480</td>
+            <td>0.32</td>
+            <td>1.2 s</td>
+            <td><span class="status-pill status-pill--ok">Validated</span></td>
+          </tr>
+          <tr>
+            <td><span class="facility-dot facility-dot--green"></span>Library</td>
+            <td><div class="quality-bar-wrap"><div class="quality-bar" style="width:91%"></div><span>0.91</span></div></td>
+            <td>1.0</td>
+            <td>9,320</td>
+            <td>0.28</td>
+            <td>0.9 s</td>
+            <td><span class="status-pill status-pill--ok">Validated</span></td>
+          </tr>
+          <tr>
+            <td><span class="facility-dot facility-dot--green"></span>Hostel Complex</td>
+            <td><div class="quality-bar-wrap"><div class="quality-bar" style="width:88%"></div><span>0.88</span></div></td>
+            <td>1.2</td>
+            <td>14,760</td>
+            <td>0.21</td>
+            <td>1.7 s</td>
+            <td><span class="status-pill status-pill--ok">Validated</span></td>
+          </tr>
+          <tr>
+            <td><span class="facility-dot facility-dot--green"></span>Science Labs</td>
+            <td><div class="quality-bar-wrap"><div class="quality-bar" style="width:95%"></div><span>0.95</span></div></td>
+            <td>0.9</td>
+            <td>8,100</td>
+            <td>0.11</td>
+            <td>0.8 s</td>
+            <td><span class="status-pill status-pill--ok">Validated</span></td>
+          </tr>
+          <tr>
+            <td><span class="facility-dot facility-dot--green"></span>Admin Block</td>
+            <td><div class="quality-bar-wrap"><div class="quality-bar" style="width:89%"></div><span>0.89</span></div></td>
+            <td>1.1</td>
+            <td>6,940</td>
+            <td>0.08</td>
+            <td>1.1 s</td>
+            <td><span class="status-pill status-pill--ok">Validated</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-footer">
+      Aggregation: SageMaker quality-weighted FedAvg · Global checkpoint stored in S3 · Next round in <strong id="next-round-timer">04:38</strong>
+    </p>
+  </section>
+
+  <!-- ─── MINI METRICS ROW ───────────────────────────────────────── -->
+  <div class="mini-row">
+    <section class="mini-card" aria-label="Model accuracy">
+      <p class="eyebrow">MODEL ACCURACY</p>
+      <div class="mini-stat-row">
+        <span>MAE</span><strong>18.4 kW</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>RMSE</span><strong>24.1 kW</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>CV-RMSE</span><strong>17.3%</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>MAPE</span><strong>4.6%</strong>
+      </div>
+    </section>
+    <section class="mini-card" aria-label="AWS pipeline health">
+      <p class="eyebrow">AWS PIPELINE HEALTH</p>
+      <div class="mini-stat-row">
+        <span>IoT Core</span><span class="health-dot health-dot--ok">●</span><strong>Healthy</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>SageMaker</span><span class="health-dot health-dot--ok">●</span><strong>Aggregating</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>Lambda optimiser</span><span class="health-dot health-dot--ok">●</span><strong>Healthy</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>CloudWatch</span><span class="health-dot health-dot--ok">●</span><strong>0 alarms</strong>
+      </div>
+    </section>
+    <section class="mini-card" aria-label="Cold-start status">
+      <p class="eyebrow">COLD-START STATUS</p>
+      <div class="mini-stat-row">
+        <span>New facility</span><strong>Sports Centre</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>Fine-tune rounds</span><strong>3 / 5</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>CV-RMSE (current)</span><strong>22.8%</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>Target</span><strong>&lt; 25%  ✓</strong>
+      </div>
+    </section>
+    <section class="mini-card" aria-label="Tariff window">
+      <p class="eyebrow">TARIFF WINDOW</p>
+      <div class="mini-stat-row">
+        <span>Current rate</span><strong>₹ 6.50/kWh</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>Peak rate (18-19)</span><strong>₹ 12.40/kWh</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>Off-peak rate</span><strong>₹ 3.20/kWh</strong>
+      </div>
+      <div class="mini-stat-row">
+        <span>Schedule source</span><strong>DynamoDB tariffs</strong>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<footer class="site-footer" role="contentinfo">
+  <p>
+    Federated Campus Energy Cloud · Student 1 prototype · Phase I ·
+    <span id="data-notice">Values are <em>simulated</em> — live AWS integration pending Phase II.</span>
+  </p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
