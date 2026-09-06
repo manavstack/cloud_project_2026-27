@@ -22,6 +22,7 @@ be wired up early in the workflow.
 import argparse
 import gzip
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -100,20 +101,24 @@ def _exists_and_nonempty(p: Path) -> bool:
     return p.exists() and any(p.iterdir())
 
 
+logger = logging.getLogger("add_datasets")
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+
+
 def _todo_git_clone(repo_url: str, dest: Path):
     dest = Path(dest)
     if _exists_and_nonempty(dest):
-        print(f"SKIP git clone: {dest} already exists and non-empty")
+        logger.info(f"SKIP git clone: {dest} already exists and non-empty")
         return
     dest.parent.mkdir(parents=True, exist_ok=True)
-    print(f"Cloning {repo_url} -> {dest}")
+    logger.info(f"Cloning {repo_url} -> {dest}")
     subprocess.run(["git", "clone", "--depth", "1", repo_url, str(dest)], check=False)
 
 
 def _todo_kaggle_download(competition_slug: str, dest: Path):
     dest = Path(dest)
     if _exists_and_nonempty(dest):
-        print(f"SKIP kaggle download: {dest} already exists and non-empty")
+        logger.info(f"SKIP kaggle download: {dest} already exists and non-empty")
         return
     try:
         from shutil import which as shutil_which
@@ -122,7 +127,7 @@ def _todo_kaggle_download(competition_slug: str, dest: Path):
     if not shutil_which("kaggle"):
         raise RuntimeError("kaggle CLI not found; install via pip install kaggle and add ~/.kaggle/kaggle.json")
     dest.mkdir(parents=True, exist_ok=True)
-    print(f"Downloading Kaggle competition {competition_slug} -> {dest}")
+    logger.info(f"Downloading Kaggle competition {competition_slug} -> {dest}")
     subprocess.run(["kaggle", "competitions", "download", "-c", competition_slug, "-p", str(dest)], check=False)
     # try to unzip any archives
     for z in dest.glob("*.zip"):
@@ -138,7 +143,7 @@ def _todo_kaggle_download(competition_slug: str, dest: Path):
 def _todo_s3_public_download(s3_prefix: str, dest: Path, max_files: int = 200):
     dest = Path(dest)
     if _exists_and_nonempty(dest):
-        print(f"SKIP s3 download: {dest} already exists and non-empty")
+        logger.info(f"SKIP s3 download: {dest} already exists and non-empty")
         return
     if boto3 is None or botocore is None:
         raise RuntimeError("boto3/botocore not available; install boto3 to fetch public S3 data")
@@ -161,7 +166,7 @@ def _todo_s3_public_download(s3_prefix: str, dest: Path, max_files: int = 200):
             target = dest / Path(key).name
             if target.exists():
                 continue
-            print(f"Downloading s3://{bucket}/{key} -> {target}")
+                    logger.info(f"Downloading s3://{bucket}/{key} -> {target}")
             client.download_file(bucket, key, str(target))
             downloaded += 1
             if downloaded >= max_files:
@@ -173,7 +178,7 @@ def _todo_nasa_power_fetch(dest: Path, lat: float = 12.97, lon: float = 79.16, s
     dest.mkdir(parents=True, exist_ok=True)
     out = dest / "weather_raw.json"
     if out.exists():
-        print(f"SKIP NASA POWER: {out} already exists")
+        logger.info(f"SKIP NASA POWER: {out} already exists")
         return
     if requests is None:
         raise RuntimeError("requests not available; please pip install requests")
@@ -197,11 +202,11 @@ def _todo_nasa_power_fetch(dest: Path, lat: float = 12.97, lon: float = 79.16, s
         "end": end,
         "format": "JSON",
     }
-    print(f"Fetching NASA POWER for lat={lat}, lon={lon}, start={start}, end={end}")
+    logger.info(f"Fetching NASA POWER for lat={lat}, lon={lon}, start={start}, end={end}")
     r = requests.get(base, params=params, timeout=30)
     r.raise_for_status()
     out.write_text(r.text)
-    print(f"Wrote {out}")
+    logger.info(f"Wrote {out}")
 
 
 def _todo_openei_fetch(dest: Path, utility_query: str = "Tamil Nadu"):
