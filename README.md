@@ -11,11 +11,15 @@ An AWS-oriented prototype for privacy-preserving energy-demand forecasting and f
 
 See `docs/` for all Phase I sections, `docs/student1/` for Student 1's assigned research, and the runnable dashboard in `src/frontend/`.
 
-## Run locally
+## Run
 
 ```bash
-python3 -m http.server 8000
-# then open http://localhost:8000/src/frontend/
+ Your Frontend URL
+http://campus-energy-frontend-585384908183.s3-website.ap-south-1.amazonaws.com
+Open that in your browser and log in with:
+
+Email: admin@campus.edu
+Password: Admin@1234!
 ```
 
 ## Proposed stack
