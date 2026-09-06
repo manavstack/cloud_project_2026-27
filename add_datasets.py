@@ -367,6 +367,14 @@ def main():
         help="Number of buildings to select as federated clients (building_load datasets only)."
     )
     parser.add_argument(
+        "--lat", type=float, default=None,
+        help="Latitude for location-based datasets (e.g., nasa_power)."
+    )
+    parser.add_argument(
+        "--lon", type=float, default=None,
+        help="Longitude for location-based datasets (e.g., nasa_power)."
+    )
+    parser.add_argument(
         "--list", action="store_true",
         help="Print the full dataset registry (name, category, auth requirements) and exit."
     )
@@ -385,7 +393,14 @@ def main():
 
     for spec in targets:
         try:
-            run_dataset(spec, args.out, n_buildings=args.n_buildings)
+            # pass lat/lon for datasets that accept them
+            if spec.key == "nasa_power":
+                run_dataset(spec, args.out, n_buildings=args.n_buildings)
+                # downloader handles defaults when lat/lon not provided; if provided, call explicitly
+                if args.lat is not None or args.lon is not None:
+                    _todo_nasa_power_fetch(RAW_DIR / spec.local_raw_dir, lat=(args.lat or 12.97), lon=(args.lon or 79.16))
+            else:
+                run_dataset(spec, args.out, n_buildings=args.n_buildings)
         except NotImplementedError as e:
             print(f"[{spec.key}] SKIPPED - not yet implemented: {e}", file=sys.stderr)
 
