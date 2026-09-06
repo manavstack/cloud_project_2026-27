@@ -177,19 +177,27 @@ def _todo_nasa_power_fetch(dest: Path, lat: float = 12.97, lon: float = 79.16, s
         return
     if requests is None:
         raise RuntimeError("requests not available; please pip install requests")
+    # If start/end aren't provided, default to the last 30 days (YYYYMMDD)
+    from datetime import datetime, timedelta
+
+    if start is None or end is None:
+        today = datetime.utcnow().date()
+        end_dt = today
+        start_dt = today - timedelta(days=30)
+        start = start or start_dt.strftime("%Y%m%d")
+        end = end or end_dt.strftime("%Y%m%d")
+
     base = "https://power.larc.nasa.gov/api/temporal/hourly/point"
     params = {
         "community": "RE",
         "parameters": "T2M,RH2M",
         "longitude": lon,
         "latitude": lat,
+        "start": start,
+        "end": end,
         "format": "JSON",
     }
-    if start:
-        params["start"] = start
-    if end:
-        params["end"] = end
-    print(f"Fetching NASA POWER for lat={lat}, lon={lon}")
+    print(f"Fetching NASA POWER for lat={lat}, lon={lon}, start={start}, end={end}")
     r = requests.get(base, params=params, timeout=30)
     r.raise_for_status()
     out.write_text(r.text)
