@@ -37,3 +37,16 @@ AWS IoT Core and Greengrass ingest edge telemetry; Lambda validates events and r
 | Workflow and evaluation plan | docs/Workflow_and_Evaluation.md |
 | Mandatory architecture diagrams | architecture/ |
 | Phase I presentation outline | presentation/Phase1_Presentation_Outline.md |
+
+## Dataset ingestion tooling
+
+This repo includes a lightweight dataset ingestion utility `add_datasets.py` that
+downloads public datasets and normalizes them into `data/processed/*.parquet`.
+
+Quick helper:
+
+```
+./scripts/fetch_nasa.sh    # fetch NASA POWER and write data/processed/nasa_power.parquet
+```
+
+See `data/README.md` for the raw/processed layout.
