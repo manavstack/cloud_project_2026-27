@@ -1,3 +1,12 @@
+# Data raw files (large downloads)
+data/raw/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
 .DS_Store
 .vscode/
 __pycache__/
