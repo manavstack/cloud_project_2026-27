@@ -20,27 +20,27 @@ window.AWS_CONFIG = {
   // ── Amazon Cognito ──────────────────────────────────────────────────────
   // SAM output: UserPoolId, UserPoolClientId
   cognito: {
-    userPoolId:          'REPLACE_ME',  // e.g.  ap-south-1_AbCdEfGhI
-    userPoolWebClientId: 'REPLACE_ME',  // e.g.  1a2b3c4d5e6f7g8h9i0j
+    userPoolId:          'ap-south-1_2bm4YeRJ5',
+    userPoolWebClientId: '5sitauocubcvtqbhh0birfiafv',
   },
 
   // ── API Gateway (REST) ──────────────────────────────────────────────────
   // SAM output: RestApiUrl
   apiGateway: {
-    restUrl: 'REPLACE_ME',  // e.g. https://abc123.execute-api.ap-south-1.amazonaws.com/prod
+    restUrl: 'https://nzkopoif4a.execute-api.ap-south-1.amazonaws.com/prod',
   },
 
   // ── API Gateway (WebSocket) ─────────────────────────────────────────────
   // SAM output: WebSocketApiUrl
   // Used for real-time IoT Core → dashboard push
   websocket: {
-    url: 'REPLACE_ME',      // e.g. wss://xyz789.execute-api.ap-south-1.amazonaws.com/prod
+    url: 'wss://8gdus6lq60.execute-api.ap-south-1.amazonaws.com/prod',
   },
 
   // ── Amazon S3 ───────────────────────────────────────────────────────────
   // SAM output: ExportBucketName
   s3: {
-    exportBucket: 'REPLACE_ME',  // e.g. campus-energy-exports-abc123
+    exportBucket: 'campus-energy-exports-585384908183-ap-south-1',
   },
 };
 

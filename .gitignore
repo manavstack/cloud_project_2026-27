@@ -9,3 +9,6 @@ dataset/processed/*
 !dataset/processed/.gitkeep
 results/*
 !results/.gitkeep
+
+.aws-sam/
+samconfig.toml

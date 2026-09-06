@@ -13,7 +13,6 @@ Globals:
     Timeout:      30
     Environment:
       Variables:
-        AWS_REGION:             !Ref AWS::Region
         FORECASTS_TABLE:        !Ref ForecastsTable
         FED_ROUNDS_TABLE:       !Ref FedRoundsTable
         SCHEDULES_TABLE:        !Ref SchedulesTable
@@ -21,7 +20,7 @@ Globals:
         ALERTS_TABLE:           !Ref AlertsTable
         WS_CONNECTIONS_TABLE:   !Ref WsConnectionsTable
         EXPORT_BUCKET:          !Ref ExportBucket
-        WS_API_ENDPOINT:        !Sub 'https://${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${WebSocketStage}'
+        WS_API_ENDPOINT:        !Sub 'https://${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}'
 
 # ─────────────────────────────────────────────────────────────────────────────
 Parameters:
@@ -41,6 +40,27 @@ Parameters:
 
 # ─────────────────────────────────────────────────────────────────────────────
 Resources:
+
+  # ── IoT Edge Node Resources ────────────────────────────────────────────────
+  CampusEdgeThing:
+    Type: AWS::IoT::Thing
+    Properties:
+      ThingName: !Sub "${AWS::StackName}-CampusEdgeNode"
+
+  CampusEdgePolicy:
+    Type: AWS::IoT::Policy
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-EdgePolicy"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "iot:Connect"
+              - "iot:Publish"
+              - "iot:Subscribe"
+              - "iot:Receive"
+            Resource: "*"
 
   # ── Cognito User Pool ────────────────────────────────────────────────────
   UserPool:
@@ -72,9 +92,9 @@ Resources:
         - ALLOW_USER_SRP_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
       PreventUserExistenceErrors:   ENABLED
-      AccessTokenValidity:          8    # hours
+      AccessTokenValidity:          8
       IdTokenValidity:              8
-      RefreshTokenValidity:         30   # days
+      RefreshTokenValidity:         30
 
   # ── DynamoDB Tables ──────────────────────────────────────────────────────
   ForecastsTable:
@@ -201,31 +221,19 @@ Resources:
                 Action: execute-api:ManageConnections
                 Resource: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/*'
 
-  # ── Cognito Authorizer (shared) ──────────────────────────────────────────
-  CognitoAuthorizer:
-    Type: AWS::ApiGateway::Authorizer
-    Properties:
-      Name:               CognitoUserPool
-      RestApiId:          !Ref RestApi
-      Type:               COGNITO_USER_POOLS
-      IdentitySource:     method.request.header.Authorization
-      ProviderARNs:       [!GetAtt UserPool.Arn]
-
   # ── API Gateway REST API ─────────────────────────────────────────────────
+  # NOTE: No DefaultAuthorizer here — auth is set per-method on each function
+  # event. This prevents SAM from generating *PermissionStage resources that
+  # cause circular dependencies with the API deployment.
   RestApi:
     Type: AWS::Serverless::Api
     Properties:
-      Name:        campus-energy-rest-api
-      StageName:   !Ref StageName
+      Name:      campus-energy-rest-api
+      StageName: !Ref StageName
       Cors:
         AllowOrigin:  "'*'"
         AllowHeaders: "'Content-Type,Authorization'"
         AllowMethods: "'GET,POST,OPTIONS'"
-      Auth:
-        DefaultAuthorizer: MyCognitoAuthorizer
-        Authorizers:
-          MyCognitoAuthorizer:
-            UserPoolArn: !GetAtt UserPool.Arn
 
   # ── API Gateway WebSocket API ────────────────────────────────────────────
   WebSocketApi:
@@ -235,26 +243,12 @@ Resources:
       ProtocolType:              WEBSOCKET
       RouteSelectionExpression:  '$request.body.action'
 
-  WebSocketConnectRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId:     !Ref WebSocketApi
-      RouteKey:  $connect
-      Target:    !Sub 'integrations/${WsConnectIntegration}'
-
   WsConnectIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId:           !Ref WebSocketApi
       IntegrationType: AWS_PROXY
       IntegrationUri:  !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WsConnectFunction.Arn}/invocations'
-
-  WebSocketDisconnectRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId:    !Ref WebSocketApi
-      RouteKey: $disconnect
-      Target:   !Sub 'integrations/${WsDisconnectIntegration}'
 
   WsDisconnectIntegration:
     Type: AWS::ApiGatewayV2::Integration
@@ -263,28 +257,65 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationUri:  !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WsDisconnectFunction.Arn}/invocations'
 
+  WebSocketConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    DependsOn: WsConnectIntegration
+    Properties:
+      ApiId:     !Ref WebSocketApi
+      RouteKey:  $connect
+      Target:    !Sub 'integrations/${WsConnectIntegration}'
+
+  WebSocketDisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    DependsOn: WsDisconnectIntegration
+    Properties:
+      ApiId:    !Ref WebSocketApi
+      RouteKey: $disconnect
+      Target:   !Sub 'integrations/${WsDisconnectIntegration}'
+
   WebSocketDeployment:
     Type: AWS::ApiGatewayV2::Deployment
-    DependsOn: [WebSocketConnectRoute, WebSocketDisconnectRoute]
+    DependsOn:
+      - WebSocketConnectRoute
+      - WebSocketDisconnectRoute
     Properties:
       ApiId: !Ref WebSocketApi
 
   WebSocketStage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
-      ApiId:         !Ref WebSocketApi
-      DeploymentId:  !Ref WebSocketDeployment
-      StageName:     !Ref StageName
-      AutoDeploy:    true
+      ApiId:        !Ref WebSocketApi
+      DeploymentId: !Ref WebSocketDeployment
+      StageName:    !Ref StageName
+      AutoDeploy:   true
+
+  # ── Lambda Permissions for WebSocket ─────────────────────────────────────
+  WsConnectPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn: WebSocketDeployment
+    Properties:
+      Action:       lambda:InvokeFunction
+      FunctionName: !GetAtt WsConnectFunction.Arn
+      Principal:    apigateway.amazonaws.com
+      SourceArn:    !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*'
+
+  WsDisconnectPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn: WebSocketDeployment
+    Properties:
+      Action:       lambda:InvokeFunction
+      FunctionName: !GetAtt WsDisconnectFunction.Arn
+      Principal:    apigateway.amazonaws.com
+      SourceArn:    !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*'
 
   # ── Lambda Functions ─────────────────────────────────────────────────────
   ForecastFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName:   campus-energy-forecast
-      CodeUri:        ../src/backend/lambda/forecast/
-      Handler:        handler.handler
-      Role:           !GetAtt LambdaRole.Arn
+      FunctionName: campus-energy-forecast
+      CodeUri:      ../src/backend/lambda/forecast/
+      Handler:      handler.handler
+      Role:         !GetAtt LambdaRole.Arn
       Environment:
         Variables:
           SAGEMAKER_ENDPOINT_NAME: !Ref SageMakerEndpointName
@@ -301,8 +332,6 @@ Resources:
             RestApiId: !Ref RestApi
             Path:      /forecast
             Method:    OPTIONS
-            Auth:
-              Authorizer: NONE
 
   FederationFunction:
     Type: AWS::Serverless::Function
@@ -324,8 +353,6 @@ Resources:
             RestApiId: !Ref RestApi
             Path:      /federation
             Method:    OPTIONS
-            Auth:
-              Authorizer: NONE
 
   ScheduleFunction:
     Type: AWS::Serverless::Function
@@ -357,8 +384,6 @@ Resources:
             RestApiId: !Ref RestApi
             Path:      /schedule
             Method:    OPTIONS
-            Auth:
-              Authorizer: NONE
 
   TariffsFunction:
     Type: AWS::Serverless::Function
@@ -380,8 +405,6 @@ Resources:
             RestApiId: !Ref RestApi
             Path:      /tariffs
             Method:    OPTIONS
-            Auth:
-              Authorizer: NONE
 
   AlertsFunction:
     Type: AWS::Serverless::Function
@@ -397,10 +420,6 @@ Resources:
             RestApiId: !Ref RestApi
             Path:      /alerts
             Method:    POST
-            Auth:
-              Authorizer: NONE   # SNS calls this directly (no JWT)
-      # Subscribe to the SNS topic
-      # (subscription URL confirmation is handled inside the Lambda)
 
   ExportFunction:
     Type: AWS::Serverless::Function
@@ -425,8 +444,6 @@ Resources:
             RestApiId: !Ref RestApi
             Path:      /export
             Method:    OPTIONS
-            Auth:
-              Authorizer: NONE
 
   WsConnectFunction:
     Type: AWS::Serverless::Function
@@ -444,23 +461,6 @@ Resources:
       Handler:      disconnect.handler
       Role:         !GetAtt LambdaRole.Arn
 
-  # ── Lambda permissions for API Gateway WebSocket ─────────────────────────
-  WsConnectPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action:       lambda:InvokeFunction
-      FunctionName: !Ref WsConnectFunction
-      Principal:    apigateway.amazonaws.com
-      SourceArn:    !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*'
-
-  WsDisconnectPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action:       lambda:InvokeFunction
-      FunctionName: !Ref WsDisconnectFunction
-      Principal:    apigateway.amazonaws.com
-      SourceArn:    !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*'
-
   # ── SNS subscription to Alerts Lambda ────────────────────────────────────
   AlertsSnsSubscription:
     Type: AWS::SNS::Subscription
@@ -472,15 +472,17 @@ Resources:
   # ── CloudWatch Log Groups ────────────────────────────────────────────────
   ForecastLogGroup:
     Type: AWS::Logs::LogGroup
+    DependsOn: ForecastFunction
     Properties:
-      LogGroupName:     !Sub '/aws/lambda/${ForecastFunction}'
-      RetentionInDays:  14
+      LogGroupName:    !Sub '/aws/lambda/${ForecastFunction}'
+      RetentionInDays: 14
 
   FederationLogGroup:
     Type: AWS::Logs::LogGroup
+    DependsOn: FederationFunction
     Properties:
-      LogGroupName:     !Sub '/aws/lambda/${FederationFunction}'
-      RetentionInDays:  14
+      LogGroupName:    !Sub '/aws/lambda/${FederationFunction}'
+      RetentionInDays: 14
 
 # ─────────────────────────────────────────────────────────────────────────────
 Outputs:

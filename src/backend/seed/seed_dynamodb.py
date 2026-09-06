@@ -51,7 +51,7 @@ def seed_table(table_name: str, items: list[dict]):
     with table.batch_writer() as batch:
         for item in items:
             batch.put_item(Item=float_to_decimal(item))
-    print(f'  ✓  {table_name}: {len(items)} item(s) seeded.')
+    print(f'  [OK] {table_name}: {len(items)} item(s) seeded.')
 
 
 # ── Data ────────────────────────────────────────────────────────────────────
