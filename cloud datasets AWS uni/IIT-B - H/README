@@ -1,0 +1,38 @@
+he dataset consists of electricity consumption data (December 2016 to June 2018) from a high-rise residential building inside the IIT Bombay campus. The building consists of 60 3BHK(3 Bedrooms, I Hall and a Kitchen) apartments, each instrumented with a smart-meter, logging data at a sampling period of 5s. The data shared in the link below is downsampled at 1-hour granularity. All the timestamps mentioned in the dataset is of Indian Standard Time(GMT+5.30), and India doesn’t follow daylight saving time. For privacy reasons, apartments are kept anonymous. The folder consists of 39 CSV files each representing an apartment. Apartments having significant data loss are removed from the list. The headers in the CSV files are as follows:
+
+1)TS – Unix Time stamp (epochs)
+2)V1 – Voltage of phase 1 (V)
+3)V2 – Voltage of phase 2  (V)
+4)V3 – Voltage of phase 3  (V)
+5)W1 – Electricity consumption of phase 1 (Wh)
+6)W2 – Electricity consumption of phase 2 (Wh)
+7)W3 – Electricity consumption of phase 3 (Wh)
+
+
+[P.S: There are some instances in which data is missing due to some unforeseen circumstances. You can use interpolation to get those values]
+
+ 
+
+Please use the following BibTex to cite the dataset
+
+@inproceedings{mammen2018want,
+title={Want to Reduce Energy Consumption, Whom should we call?},
+author={Mammen, Priyanka Mary and Kumar, Hareesh and Ramamritham, Krithi and Rashid, Haroon},
+booktitle={Proceedings of the Ninth International Conference on Future Energy Systems},
+pages={12–20},
+year={2018},
+organization={ACM}
+}
+
+ 
+
+If you face any issues with the dataset, please feel free to reach us at seil@cse.iitb.ac.in.
+
+To contact authors:
+Priyanka Mary Mammen : priyankam@cse.iitb.ac.in
+Hareesh Kumar : hareesh@iitb.ac.in
+Krithi Ramamritham : krithi@iitb.ac.in
+Haroon Rashid : haroonr@iiitd.ac.in
+
+Creative Commons License
+This work is licensed under a Creative Commons Attribution 4.0 International License.
