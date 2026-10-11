@@ -1,43 +1,32 @@
-# cloud_project_2026-27
+# FEDRA Cloud Energy Prediction
 
-PROJECT TITLE - CLOUD ENERGY CONSUMPTION PREDICTION  FRAMEWORK FOR SMART UNIVERSITY CAMPUSES 
+Feature 1 is a reproducible energy-forecasting foundation for smart-university data. It ingests three heterogeneous sources into PostgreSQL, protects their source and asset identity, and evaluates chronological baselines before using the Hybrid Adaptive Mixture-of-Experts model.
 
-PROBLEM STATEMENT-
+## Student 1 scope
 
-Privacy Concerns & Data Silos: Centralised multi-campus energy management exposes occupant behavioral privacy and violates strict data governance regulations (such as GDPR and CCPA), creating isolated data silos that restrict raw operational data sharing.  
+Manav Mishra (24BIT0100) owns the Feature 1 data, database, reproducibility, and model-integration foundation on the `feature1` branch.
 
-Data Heterogeneity & Cold-Start Drift: Statistical non-IID data distributions, multi-source sensor heterogeneity, and localized data scarcity in newly commissioned facilities lead to severe global model drift and inaccurate local predictions.  
+## Architecture
 
-Lack of Automated Cloud Control: Existing solutions lack an enterprise-grade cloud architecture capable of converting private edge-based energy forecasts into real-time load-shifting actions.  
+Raw IIT Bombay, La Trobe, and Valahia files are parsed source-by-source, validated against one canonical observation contract, and stored in PostgreSQL. Source experts produce aligned forecasts. A gradient-trained gate combines them with exponentially weighted reliability that is updated only after the observed target is available.
 
+See [AWS architecture](architecture/AWS_Architecture.svg), [system architecture](architecture/System_Architecture.svg), and [workflow](architecture/Workflow.svg).
 
-OBJECTIVES
+## Quick start
 
-The project objectives are to deploy edge deep learning models (CNN-LSTM and Transformers) for privacy-preserving energy forecasting, architect a serverless AWS backend for secure model aggregation, enable cold-start target adaptation, and optimize multi-campus load balancing under time-of-use tariffs.
+1. Copy `.env.example` to `.env` and enter local PostgreSQL credentials for `cloud_project` on port `5432`.
+2. Install dependencies: `python -m pip install -r requirements.txt`.
+3. Create the schema: `python -c "from src.db import apply_migrations; apply_migrations()"`.
+4. Load a reviewed source with `python -m src.ingest.load iit "cloud datasets AWS uni/IIT-B - H"`.
 
+Do not commit `.env`, raw credentials, processed data, or serialized models.
 
-TEAM MEMBERS NAME 
+## Repository map
 
-
-
-NAME-MANAV MISHRA(STUDENT 1)
-REG NO.-24BIT0100
-
-NAME -AADITYA CHOURASIA(STUDENT 3)
-REG NO.-24BIT0556
-
-NAME-VIGNESH SHAILESH KUMAR AVIK(STUDENT 2)
-REG NO.-24BIT0498
-
-
-
-
-
-
-
-
-
-
-
-
-
+- `architecture/` — project and AWS diagrams.
+- `dataset/` — raw-data manifest and generated-data policy.
+- `database/` — PostgreSQL migrations.
+- `docs/` — workflow, dataset, and report material.
+- `src/` — ingestion, backend, ML, AWS, and federated boundaries.
+- `results/` — generated evaluation evidence.
+- `presentation/` — review-deck outline.

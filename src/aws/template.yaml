@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: FEDRA Feature 1 deployment boundary
+Resources:
+  Feature1Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: feature1
+  Feature1Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.lambda_handler
+      Runtime: python3.12
+      CodeUri: .
+      Events:
+        Health:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Feature1Api
+            Path: /health
+            Method: get

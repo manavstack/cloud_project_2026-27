@@ -1,0 +1,18 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+models/
+*.joblib
+*.pkl
+
+# Generated data and experiment outputs; retain only the directory placeholders.
+dataset/processed/*
+!dataset/processed/.gitkeep
+results/graphs/*
+!results/graphs/.gitkeep
+results/screenshots/*
+!results/screenshots/.gitkeep
