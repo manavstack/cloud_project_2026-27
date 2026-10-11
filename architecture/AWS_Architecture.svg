@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 520" width="100%" height="100%" style="background:#ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#d97706"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#2563eb"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="35" y="38" font-size="16" font-weight="700" fill="#0f172a">FEDRA Feature 2: Target AWS Cloud &amp; Edge Architecture</text>
+  <text x="35" y="56" font-size="11" font-weight="500" fill="#64748b">Edge-Assisted Smart Campus Energy Management using Federated Learning</text>
+
+  <!-- Outer AWS Boundary Box -->
+  <rect x="30" y="70" width="960" height="425" rx="10" fill="#fffdfa" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="45" y="88" font-size="10.5" font-weight="600" fill="#b45309">AWS Cloud &amp; Campus Edge · least-privilege IAM · secrets outside code · mutual TLS 1.3</text>
+
+  <!-- ON-PREMISES EDGE BOX (Left Column) -->
+  <rect x="50" y="105" width="230" height="235" rx="8" fill="#fefce8" stroke="#ca8a04" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <text x="65" y="125" font-size="11" font-weight="700" fill="#854d0e">Campus Edge Nodes (Greengrass v2)</text>
+  <text x="65" y="139" font-size="9" fill="#a16207">On-premises Substations · Hostels · Labs</text>
+
+  <!-- Edge Sub-box 1: IoT Sensors & BACnet -->
+  <rect x="65" y="150" width="200" height="50" rx="6" fill="#ffffff" stroke="#eab308" stroke-width="1"/>
+  <text x="75" y="168" font-size="11" font-weight="700" fill="#1e293b">Campus Meters &amp; DERs</text>
+  <text x="75" y="184" font-size="9" fill="#64748b">1Hz smart meters · PV · 500kWh BESS</text>
+
+  <!-- Edge Sub-box 2: Local SQLite & DP-SGD FL Worker -->
+  <rect x="65" y="210" width="200" height="58" rx="6" fill="#ffffff" stroke="#eab308" stroke-width="1"/>
+  <text x="75" y="228" font-size="11" font-weight="700" fill="#1e293b">Edge DP-SGD FL Client</text>
+  <text x="75" y="243" font-size="9" fill="#64748b">PyTorch · BiLSTM · (ε, δ)-DP noise</text>
+  <text x="75" y="257" font-size="8.5" font-weight="600" fill="#b45309">🔒 100% raw data stays on edge</text>
+
+  <!-- Edge Sub-box 3: Fast-Loop BMS Actuator -->
+  <rect x="65" y="278" width="200" height="50" rx="6" fill="#ffffff" stroke="#eab308" stroke-width="1"/>
+  <text x="75" y="296" font-size="11" font-weight="700" fill="#1e293b">Edge BMS Actuator</text>
+  <text x="75" y="312" font-size="9" fill="#64748b">Modbus/BACnet · Autonomous failsafe</text>
+
+  <!-- CORE AWS CLOUD COMPONENTS (Middle & Right) -->
+
+  <!-- 1. AWS IoT Core -->
+  <rect x="315" y="115" width="130" height="65" rx="6" fill="#fff7ed" stroke="#f97316" stroke-width="1.2"/>
+  <text x="330" y="138" font-size="12" font-weight="700" fill="#1e293b">AWS IoT Core</text>
+  <text x="330" y="154" font-size="9" fill="#64748b">mTLS 1.3 · MQTT broker</text>
+  <text x="330" y="167" font-size="9" fill="#64748b">Device Shadows</text>
+
+  <!-- 2. Step Functions (FL Coordinator) -->
+  <rect x="475" y="115" width="145" height="65" rx="6" fill="#fff7ed" stroke="#f97316" stroke-width="1.2"/>
+  <text x="490" y="138" font-size="12" font-weight="700" fill="#1e293b">Step Functions</text>
+  <text x="490" y="154" font-size="9" fill="#64748b">FL Coordinator</text>
+  <text x="490" y="167" font-size="9" fill="#64748b">Round sync · K ≥ 4</text>
+
+  <!-- 3. ECS Fargate (Secure Aggregator) -->
+  <rect x="650" y="115" width="145" height="65" rx="6" fill="#fff7ed" stroke="#f97316" stroke-width="1.2"/>
+  <text x="665" y="138" font-size="12" font-weight="700" fill="#1e293b">ECS Fargate</text>
+  <text x="665" y="154" font-size="9" fill="#64748b">FedProx Aggregator</text>
+  <text x="665" y="167" font-size="9" fill="#64748b">SMPC · Trimmed mean</text>
+
+  <!-- 4. S3 Model Registry -->
+  <rect x="825" y="115" width="140" height="65" rx="6" fill="#fff7ed" stroke="#f97316" stroke-width="1.2"/>
+  <text x="840" y="138" font-size="12" font-weight="700" fill="#1e293b">S3 Bucket</text>
+  <text x="840" y="154" font-size="9" fill="#64748b">Versioned models</text>
+  <text x="840" y="167" font-size="9" fill="#64748b">Encrypted checkpoints</text>
+
+  <!-- 5. Lambda (MPC Energy Optimizer) -->
+  <rect x="475" y="240" width="145" height="65" rx="6" fill="#fff7ed" stroke="#f97316" stroke-width="1.2"/>
+  <text x="490" y="263" font-size="12" font-weight="700" fill="#1e293b">Lambda Optimizer</text>
+  <text x="490" y="279" font-size="9" fill="#64748b">24h MPC solver</text>
+  <text x="490" y="292" font-size="9" fill="#64748b">Peak shaving dispatch</text>
+
+  <!-- 6. RDS PostgreSQL / Timestream -->
+  <rect x="650" y="240" width="145" height="65" rx="6" fill="#fff7ed" stroke="#f97316" stroke-width="1.2"/>
+  <text x="665" y="263" font-size="12" font-weight="700" fill="#1e293b">RDS PostgreSQL</text>
+  <text x="665" y="279" font-size="9" fill="#64748b">Energy observations</text>
+  <text x="665" y="292" font-size="9" fill="#64748b">Tariff &amp; BESS constraints</text>
+
+  <!-- 7. API Gateway -->
+  <rect x="825" y="240" width="140" height="65" rx="6" fill="#fff7ed" stroke="#f97316" stroke-width="1.2"/>
+  <text x="840" y="263" font-size="12" font-weight="700" fill="#1e293b">API Gateway</text>
+  <text x="840" y="279" font-size="9" fill="#64748b">Authenticated REST/WS</text>
+  <text x="840" y="292" font-size="9" fill="#64748b">Cognito authorizer</text>
+
+  <!-- SUPPORTING SERVICES (Bottom Row) -->
+
+  <!-- CloudWatch -->
+  <rect x="315" y="380" width="145" height="55" rx="6" fill="#fff7ed" stroke="#f97316" stroke-width="1.2"/>
+  <text x="330" y="403" font-size="12" font-weight="700" fill="#1e293b">CloudWatch</text>
+  <text x="330" y="419" font-size="9" fill="#64748b">Logs · alarms · FL loss</text>
+
+  <!-- Secrets Manager & KMS -->
+  <rect x="520" y="380" width="170" height="55" rx="6" fill="#fff7ed" stroke="#f97316" stroke-width="1.2"/>
+  <text x="535" y="403" font-size="12" font-weight="700" fill="#1e293b">Secrets Manager &amp; KMS</text>
+  <text x="535" y="419" font-size="9" fill="#64748b">DB creds · CMK weight keys</text>
+
+  <!-- Web App / Amplify Dashboard -->
+  <rect x="740" y="380" width="225" height="55" rx="6" fill="#fff7ed" stroke="#f97316" stroke-width="1.2"/>
+  <text x="755" y="403" font-size="12" font-weight="700" fill="#1e293b">Campus Energy Dashboard</text>
+  <text x="755" y="419" font-size="9" fill="#64748b">Amplify SPA · Microgrid flows · Overrides</text>
+
+  <!-- CONNECTING ARROWS -->
+  <!-- 1. Edge to IoT Core (Masked weights upload) -->
+  <line x1="265" y1="239" x2="313" y2="152" stroke="#d97706" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 2. IoT Core to Step Functions -->
+  <line x1="445" y1="147" x2="473" y2="147" stroke="#d97706" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 3. Step Functions to ECS Fargate -->
+  <line x1="620" y1="147" x2="648" y2="147" stroke="#d97706" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 4. ECS Fargate to S3 -->
+  <line x1="795" y1="147" x2="823" y2="147" stroke="#d97706" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 5. S3 Global model to Lambda Optimizer -->
+  <path d="M 895,180 L 895,215 L 550,215 L 550,238" fill="none" stroke="#d97706" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 6. Lambda to RDS -->
+  <line x1="620" y1="272" x2="648" y2="272" stroke="#d97706" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 7. RDS to API Gateway -->
+  <line x1="795" y1="272" x2="823" y2="272" stroke="#d97706" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 8. Closed-loop: Lambda Optimizer back to IoT Core Device Shadows -->
+  <path d="M 475,272 L 380,272 L 380,182" fill="none" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+
+  <!-- 9. IoT Core down to Edge BMS Actuator -->
+  <path d="M 340,180 L 340,303 L 267,303" fill="none" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+
+  <!-- 10. Secrets Manager to RDS -->
+  <line x1="615" y1="380" x2="685" y2="307" stroke="#d97706" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 11. Lambda to CloudWatch -->
+  <line x1="490" y1="305" x2="430" y2="378" stroke="#d97706" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 12. API Gateway to Dashboard -->
+  <line x1="895" y1="305" x2="880" y2="378" stroke="#d97706" stroke-width="1.5" marker-end="url(#arrow)"/>
+</svg>

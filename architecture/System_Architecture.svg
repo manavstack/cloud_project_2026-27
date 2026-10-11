@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 480" width="100%" height="100%" style="background:#ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <marker id="sysArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#2563eb"/>
+    </marker>
+    <marker id="loopArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#16a34a"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="35" y="38" font-size="16" font-weight="700" fill="#0f172a">FEDRA Feature 2 Complete System Architecture</text>
+  <text x="35" y="56" font-size="11" font-weight="500" fill="#64748b">Edge-Assisted Smart Campus Energy Management using Federated Learning</text>
+
+  <!-- TOP ROW: INGESTION, PARSING, LOCAL STORAGE & PRIVACY-PRESERVING EDGE TRAINING -->
+  <!-- Box 1: Campus IoT Sources -->
+  <rect x="40" y="85" width="190" height="75" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+  <text x="55" y="110" font-size="12" font-weight="700" fill="#1e293b">Campus IoT Sources</text>
+  <text x="55" y="128" font-size="9" fill="#64748b">Academic · Hostels · Labs</text>
+  <text x="55" y="142" font-size="9" fill="#64748b">Solar PV · 500kWh BESS · EVs</text>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="230" y1="122" x2="268" y2="122" stroke="#2563eb" stroke-width="1.5" marker-end="url(#sysArrow)"/>
+
+  <!-- Box 2: Edge Parsers -->
+  <rect x="270" y="85" width="195" height="75" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+  <text x="285" y="110" font-size="12" font-weight="700" fill="#1e293b">Edge Source Parsers</text>
+  <text x="285" y="128" font-size="9" fill="#64748b">Modbus TCP · BACnet/IP</text>
+  <text x="285" y="142" font-size="9" fill="#64748b">1Hz - 10s validation policies</text>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="465" y1="122" x2="503" y2="122" stroke="#2563eb" stroke-width="1.5" marker-end="url(#sysArrow)"/>
+
+  <!-- Box 3: Local Private Store -->
+  <rect x="505" y="85" width="195" height="75" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+  <text x="520" y="110" font-size="12" font-weight="700" fill="#1e293b">Local Edge Store</text>
+  <text x="520" y="128" font-size="9" fill="#64748b">Embedded SQLite / Timescale</text>
+  <text x="520" y="142" font-size="9" fill="#64748b">Zero raw observations leave edge</text>
+
+  <!-- Arrow 3 -> 4 -->
+  <line x1="700" y1="122" x2="738" y2="122" stroke="#2563eb" stroke-width="1.5" marker-end="url(#sysArrow)"/>
+
+  <!-- Box 4: Edge FL Forecaster -->
+  <rect x="740" y="85" width="235" height="75" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+  <text x="755" y="110" font-size="12" font-weight="700" fill="#1e293b">Edge DP-SGD Forecaster</text>
+  <text x="755" y="128" font-size="9" fill="#64748b">BiLSTM · Temporal attention</text>
+  <text x="755" y="142" font-size="9" fill="#64748b">L2 norm clip C=1.5 · (ε, δ)-DP noise</text>
+
+  <!-- Transition label & connecting routing line from Top Row to Bottom Row -->
+  <text x="580" y="200" font-size="9" font-weight="600" fill="#1e40af">Strict privacy barrier: Only encrypted DP weight tensors (ΔW) cross to cloud</text>
+  <path d="M 855,160 L 855,215 L 200,215 L 200,253" fill="none" stroke="#2563eb" stroke-width="1.5" marker-end="url(#sysArrow)"/>
+
+  <!-- BOTTOM ROW: FEDERATED AGGREGATION, ENERGY OPTIMIZATION & ACTUATION -->
+  <!-- Box 5: Cloud FL Aggregator -->
+  <rect x="100" y="255" width="240" height="75" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+  <text x="115" y="280" font-size="12" font-weight="700" fill="#1e293b">FedProx Cloud Aggregator</text>
+  <text x="115" y="298" font-size="9" fill="#64748b">Proximal regularization (μ=0.01)</text>
+  <text x="115" y="312" font-size="9" fill="#64748b">SMPC unmasking · Trimmed mean filter</text>
+
+  <!-- Arrow 5 -> 6 -->
+  <line x1="340" y1="292" x2="388" y2="292" stroke="#2563eb" stroke-width="1.5" marker-end="url(#sysArrow)"/>
+
+  <!-- Box 6: MPC Optimization Engine -->
+  <rect x="390" y="255" width="250" height="75" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+  <text x="405" y="280" font-size="12" font-weight="700" fill="#1e293b">Multi-Objective MPC Engine</text>
+  <text x="405" y="298" font-size="9" fill="#64748b">24h rolling horizon · TOU grid tariffs</text>
+  <text x="405" y="312" font-size="9" fill="#64748b">Peak demand penalty · Comfort [21-24°C]</text>
+
+  <!-- Arrow 6 -> 7 -->
+  <line x1="640" y1="292" x2="688" y2="292" stroke="#2563eb" stroke-width="1.5" marker-end="url(#sysArrow)"/>
+
+  <!-- Box 7: Closed-Loop BMS Actuation -->
+  <rect x="690" y="255" width="245" height="75" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+  <text x="705" y="280" font-size="12" font-weight="700" fill="#1e293b">Closed-Loop BMS Actuation</text>
+  <text x="705" y="298" font-size="9" fill="#64748b">IoT Shadow setpoint dispatch</text>
+  <text x="705" y="312" font-size="9" fill="#64748b">VAV dampers · Chiller setbacks · BESS</text>
+
+  <!-- Closed-loop Feedback Arrow: from Box 7 back to Box 1 -->
+  <path d="M 810,330 L 810,400 L 135,400 L 135,162" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#loopArrow)"/>
+  <text x="470" y="420" font-size="9" font-weight="600" fill="#15803d">Continuous closed-loop feedback: Realized load vs predicted load tuning</text>
+</svg>
