@@ -1,0 +1,593 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Smart Campus Energy Cloud - IoT ingestion, forecasting, tariff-aware control,
+  alerting and secure dashboard API (AWS SAM).
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: smart-campus-energy
+    AllowedPattern: "^[a-z0-9-]{3,30}$"
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+  AlertEmail:
+    Type: String
+    Default: ""
+    Description: Email for peak-demand and anomaly alerts (leave empty to skip)
+  PeakThresholdKw:
+    Type: Number
+    Default: 50
+    Description: Per-building demand (kW) that triggers a peak alert / control actions
+  Timezone:
+    Type: String
+    Default: Asia/Kolkata
+    Description: IANA timezone used to evaluate tariff windows
+  ControlSchedule:
+    Type: String
+    Default: rate(15 minutes)
+  CorsOrigin:
+    Type: String
+    Default: http://localhost:3000
+    Description: Dashboard origin allowed to call the API
+  SageMakerEndpointName:
+    Type: String
+    Default: ""
+    Description: Optional SageMaker endpoint used by the forecaster (empty = built-in baseline)
+  LogRetentionDays:
+    Type: Number
+    Default: 30
+
+Conditions:
+  HasAlertEmail: !Not [!Equals [!Ref AlertEmail, ""]]
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    Timeout: 30
+    MemorySize: 256
+    Tracing: PassThrough
+    Environment:
+      Variables:
+        PEAK_KW: !Ref PeakThresholdKw
+        ALERT_TOPIC: !Ref AlertTopic
+        READINGS_TABLE: !Ref ReadingsTable
+        FORECASTS_TABLE: !Ref ForecastsTable
+        ACTIONS_TABLE: !Ref ActionsTable
+        ALERTS_TABLE: !Ref AlertsTable
+        BUILDINGS_TABLE: !Ref BuildingsTable
+        TARIFF_TABLE: !Ref TariffTable
+
+Resources:
+  # ------------------------------------------------------------------ Storage
+  RawBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-${Environment}-raw-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: tier-and-expire
+            Status: Enabled
+            Transitions:
+              - StorageClass: STANDARD_IA
+                TransitionInDays: 90
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 90
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+
+  RawBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref RawBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt RawBucket.Arn
+              - !Sub "${RawBucket.Arn}/*"
+            Condition:
+              Bool:
+                "aws:SecureTransport": "false"
+
+  BuildingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: building_id, AttributeType: S }
+      KeySchema:
+        - { AttributeName: building_id, KeyType: HASH }
+
+  ReadingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - { AttributeName: building_id, AttributeType: S }
+        - { AttributeName: ts, AttributeType: S }
+      KeySchema:
+        - { AttributeName: building_id, KeyType: HASH }
+        - { AttributeName: ts, KeyType: RANGE }
+
+  ForecastsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: building_id, AttributeType: S }
+        - { AttributeName: target_ts, AttributeType: S }
+      KeySchema:
+        - { AttributeName: building_id, KeyType: HASH }
+        - { AttributeName: target_ts, KeyType: RANGE }
+
+  ActionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: building_id, AttributeType: S }
+        - { AttributeName: created_at, AttributeType: S }
+      KeySchema:
+        - { AttributeName: building_id, KeyType: HASH }
+        - { AttributeName: created_at, KeyType: RANGE }
+
+  AlertsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: building_id, AttributeType: S }
+        - { AttributeName: created_at, AttributeType: S }
+      KeySchema:
+        - { AttributeName: building_id, KeyType: HASH }
+        - { AttributeName: created_at, KeyType: RANGE }
+
+  TariffTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: window_id, AttributeType: S }
+      KeySchema:
+        - { AttributeName: window_id, KeyType: HASH }
+
+  # ----------------------------------------------------------- Alerts (SNS)
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${ProjectName}-${Environment}-alerts"
+
+  AlertEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasAlertEmail
+    Properties:
+      TopicArn: !Ref AlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  # ------------------------------------------------------ IoT device access
+  DeviceIotPolicy:
+    Type: AWS::IoT::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-${Environment}-device"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: iot:Connect
+            Resource: !Sub "arn:aws:iot:${AWS::Region}:${AWS::AccountId}:client/${!iot:Connection.Thing.ThingName}"
+          - Effect: Allow
+            Action: iot:Publish
+            Resource: !Sub "arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/campus/*/telemetry"
+
+  # --------------------------------------------------------------- Lambdas
+  PreprocessFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: PreprocessLogGroup
+    Properties:
+      FunctionName: !Sub "${ProjectName}-${Environment}-preprocess"
+      Description: IoT telemetry -> validate -> S3 + DynamoDB + alerts
+      CodeUri: src/preprocess/
+      Handler: app.lambda_handler
+      Environment:
+        Variables:
+          RAW_BUCKET: !Ref RawBucket
+      Policies:
+        - S3WritePolicy:
+            BucketName: !Ref RawBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ReadingsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BuildingsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AlertsTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt AlertTopic.TopicName
+      Events:
+        Telemetry:
+          Type: IoTRule
+          Properties:
+            Sql: "SELECT *, topic(2) AS building_id, timestamp() AS ingest_ts FROM 'campus/+/telemetry'"
+            AwsIotSqlVersion: "2016-03-23"
+
+  ForecastFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: ForecastLogGroup
+    Properties:
+      FunctionName: !Sub "${ProjectName}-${Environment}-forecast"
+      Description: Short-term demand forecast (baseline or SageMaker endpoint)
+      CodeUri: src/forecast/
+      Handler: app.lambda_handler
+      Environment:
+        Variables:
+          SAGEMAKER_ENDPOINT: !Ref SageMakerEndpointName
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ReadingsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref BuildingsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ForecastsTable
+        - Statement:
+            - Effect: Allow
+              Action: sagemaker:InvokeEndpoint
+              Resource: !Sub "arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:endpoint/*"
+      Events:
+        Schedule:
+          Type: Schedule
+          Properties:
+            Schedule: !Ref ControlSchedule
+            Description: Forecast just before the control engine runs
+
+  ControlPolicyFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: ControlLogGroup
+    Properties:
+      FunctionName: !Sub "${ProjectName}-${Environment}-control"
+      Description: Tariff-aware rule engine that recommends control actions
+      CodeUri: src/control_policy/
+      Handler: app.lambda_handler
+      Timeout: 60
+      Environment:
+        Variables:
+          TIMEZONE: !Ref Timezone
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ForecastsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref BuildingsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref TariffTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ActionsTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt AlertTopic.TopicName
+      Events:
+        Schedule:
+          Type: Schedule
+          Properties:
+            Schedule: !Ref ControlSchedule
+            Description: Run the control policy engine
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: ApiLogGroup
+    Properties:
+      FunctionName: !Sub "${ProjectName}-${Environment}-api"
+      Description: Dashboard API (Cognito-protected)
+      CodeUri: src/api/
+      Handler: app.lambda_handler
+      Timeout: 15
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ReadingsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref ForecastsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref ActionsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref AlertsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref BuildingsTable
+      Events:
+        GetBuildings:
+          Type: HttpApi
+          Properties: { ApiId: !Ref DashboardApi, Path: /buildings, Method: GET }
+        GetReadings:
+          Type: HttpApi
+          Properties: { ApiId: !Ref DashboardApi, Path: /readings, Method: GET }
+        GetForecasts:
+          Type: HttpApi
+          Properties: { ApiId: !Ref DashboardApi, Path: /forecasts, Method: GET }
+        GetActions:
+          Type: HttpApi
+          Properties: { ApiId: !Ref DashboardApi, Path: /actions, Method: GET }
+        GetAlerts:
+          Type: HttpApi
+          Properties: { ApiId: !Ref DashboardApi, Path: /alerts, Method: GET }
+
+  # -------------------------------------------------------- Auth (Cognito)
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${ProjectName}-${Environment}-users"
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes: [email]
+      MfaConfiguration: OPTIONAL
+      EnabledMfas: [SOFTWARE_TOKEN_MFA]
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 3
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - { Name: verified_email, Priority: 1 }
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "${ProjectName}-${Environment}-dashboard"
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      # USER_PASSWORD_AUTH is a dev convenience for CLI testing; remove it for production
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      RefreshTokenValidity: 12
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: hours
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub "${ProjectName}-${Environment}-${AWS::AccountId}"
+      UserPoolId: !Ref UserPool
+
+  AdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: admin
+      Description: Campus energy administrators
+      UserPoolId: !Ref UserPool
+
+  FacilityStaffGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: facility_staff
+      Description: Facility managers (read access)
+      UserPoolId: !Ref UserPool
+
+  # ------------------------------------------------------------- HTTP API
+  DashboardApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: [!Ref CorsOrigin]
+        AllowHeaders: [authorization, content-type]
+        AllowMethods: [GET, OPTIONS]
+        MaxAge: 300
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 50
+        ThrottlingRateLimit: 25
+      AccessLogSettings:
+        DestinationArn: !GetAtt ApiAccessLogGroup.Arn
+        Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","routeKey":"$context.routeKey","status":"$context.status","latency":"$context.responseLatency"}'
+      Auth:
+        DefaultAuthorizer: CognitoJwt
+        Authorizers:
+          CognitoJwt:
+            IdentitySource: "$request.header.Authorization"
+            JwtConfiguration:
+              issuer: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}"
+              audience:
+                - !Ref UserPoolClient
+
+  # ------------------------------------------------- SageMaker (role only)
+  SageMakerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: sagemaker.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject, s3:ListBucket]
+                Resource:
+                  - !GetAtt RawBucket.Arn
+                  - !Sub "${RawBucket.Arn}/*"
+              - Effect: Allow
+                Action: [dynamodb:Query, dynamodb:Scan, dynamodb:GetItem, dynamodb:BatchGetItem]
+                Resource:
+                  - !GetAtt ReadingsTable.Arn
+                  - !GetAtt BuildingsTable.Arn
+              - Effect: Allow
+                Action: [dynamodb:PutItem, dynamodb:BatchWriteItem]
+                Resource: !GetAtt ForecastsTable.Arn
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchCheckLayerAvailability
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                  - cloudwatch:PutMetricData
+                Resource: "*"
+
+  # ------------------------------------------------------------ Monitoring
+  PreprocessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectName}-${Environment}-preprocess"
+      RetentionInDays: !Ref LogRetentionDays
+
+  ForecastLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectName}-${Environment}-forecast"
+      RetentionInDays: !Ref LogRetentionDays
+
+  ControlLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectName}-${Environment}-control"
+      RetentionInDays: !Ref LogRetentionDays
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectName}-${Environment}-api"
+      RetentionInDays: !Ref LogRetentionDays
+
+  ApiAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/apigateway/${ProjectName}-${Environment}-api"
+      RetentionInDays: !Ref LogRetentionDays
+
+  PreprocessErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-${Environment}-preprocess-errors"
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref PreprocessFunction }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  ForecastErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-${Environment}-forecast-errors"
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref ForecastFunction }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  ControlErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-${Environment}-control-errors"
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref ControlPolicyFunction }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  ApiErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-${Environment}-api-errors"
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref ApiFunction }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  OpsDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub "${ProjectName}-${Environment}-ops"
+      DashboardBody: !Sub |
+        {"widgets":[
+          {"type":"metric","x":0,"y":0,"width":12,"height":6,"properties":{"title":"Lambda invocations","region":"${AWS::Region}","stat":"Sum","period":300,
+            "metrics":[["AWS/Lambda","Invocations","FunctionName","${PreprocessFunction}"],["AWS/Lambda","Invocations","FunctionName","${ForecastFunction}"],["AWS/Lambda","Invocations","FunctionName","${ControlPolicyFunction}"],["AWS/Lambda","Invocations","FunctionName","${ApiFunction}"]]}},
+          {"type":"metric","x":12,"y":0,"width":12,"height":6,"properties":{"title":"Lambda errors","region":"${AWS::Region}","stat":"Sum","period":300,
+            "metrics":[["AWS/Lambda","Errors","FunctionName","${PreprocessFunction}"],["AWS/Lambda","Errors","FunctionName","${ForecastFunction}"],["AWS/Lambda","Errors","FunctionName","${ControlPolicyFunction}"],["AWS/Lambda","Errors","FunctionName","${ApiFunction}"]]}}
+        ]}
+
+Outputs:
+  ApiUrl:
+    Value: !GetAtt DashboardApi.ApiEndpoint
+    Description: Base URL of the dashboard API
+  UserPoolId:
+    Value: !Ref UserPool
+  UserPoolClientId:
+    Value: !Ref UserPoolClient
+  CognitoDomain:
+    Value: !Sub "${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
+  IotPolicyName:
+    Value: !Ref DeviceIotPolicy
+  ThingPrefix:
+    Value: !Sub "${ProjectName}-${Environment}"
+  RawBucketName:
+    Value: !Ref RawBucket
+  BuildingsTableName:
+    Value: !Ref BuildingsTable
+  ReadingsTableName:
+    Value: !Ref ReadingsTable
+  ForecastsTableName:
+    Value: !Ref ForecastsTable
+  TariffTableName:
+    Value: !Ref TariffTable
+  AlertTopicArn:
+    Value: !Ref AlertTopic
+  SageMakerRoleArn:
+    Value: !GetAtt SageMakerExecutionRole.Arn
+  ControlFunctionName:
+    Value: !Ref ControlPolicyFunction
+  ForecastFunctionName:
+    Value: !Ref ForecastFunction
