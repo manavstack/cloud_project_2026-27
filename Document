@@ -1,1 +1,14 @@
 
+FEDRA: PRIVACY-AWARE SMART-CAMPUS ENERGY PREDICTION
+
+Problem
+Smart campuses collect electricity and heat measurements across buildings, meters, units, cadences, and timezones. Centralizing all meter data can create privacy and governance barriers, while mixing incompatible physical units produces invalid forecasts.
+
+Proposed solution
+FEDRA validates source provenance and trains a small demand-profile model locally at each eligible campus dataset. Client targets are normalized using training data only. Clients share model parameters for sample-count-weighted Federated Averaging (FedAvg), not their raw readings. Campus-local scale and unit conversion remain with the source owner.
+
+Executed proof of concept
+The current run trained 59 clients: 38 IIT Bombay apartment datasets, 9 IIIT-Delhi building datasets, and 12 Valahia building/year/vector datasets. Each local dataset was chronologically split 80/20. Five global parameter vectors were aggregated and saved in results/federated_demo/weights.json. University of Twente extracts were too small for the 500-row minimum, one IIT Bombay apartment file had only 37 valid rows, and La Trobe was withheld pending unit/timezone validation.
+
+Evidence and limitations
+The five global features are hour-of-day and weekday sine/cosine plus a bias. The model predicts relative normalized profiles, not absolute energy. Median local holdout results are documented in presentation/Federated_Training_Results.md. They show only modest baseline improvements and do not establish operational performance. The implementation is a single-machine simulation, not a deployed federation; secure aggregation, differential privacy, authenticated clients, fresh data, and field validation remain necessary.

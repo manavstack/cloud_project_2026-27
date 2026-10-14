@@ -13,8 +13,8 @@ def read_valahia(path: Path) -> pd.DataFrame:
         raise ValueError(f"Unexpected Valahia filename: {path.name}")
     kind, building, year = match.groups()
     raw = pd.read_csv(path)
-    if list(raw.columns) != ["kWh"]:
-        raise ValueError(f"{path} must contain only a kWh column")
+    if len(raw.columns) != 1:
+        raise ValueError(f"{path} must contain exactly one demand column")
     # Hourly sequence is reconstructed from documented year; timezone is recorded as Europe/Bucharest.
     timestamps = pd.date_range(f"{year}-01-01", periods=len(raw), freq="h", tz="Europe/Bucharest")
     return pd.DataFrame({
@@ -23,7 +23,7 @@ def read_valahia(path: Path) -> pd.DataFrame:
         "asset_id": building,
         "reading_time": timestamps.tz_convert("UTC"),
         "energy_vector": "electricity" if kind == "elec" else "heat",
-        "consumption_value": raw["kWh"],
+        "consumption_value": raw.iloc[:, 0],
         "unit": "kWh",
         "interval_minutes": 60,
         "source_file": path.name,

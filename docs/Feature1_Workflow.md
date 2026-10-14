@@ -33,9 +33,17 @@ python -m src.ingest.load la-trobe "cloud datasets AWS uni/la trobe uni - H/buil
 
 La Trobe loading streams its archive in chunks. Its source unit remains `pending_validation`, so it is not eligible for mixed-unit MoE output until documented conversion/alignment is supplied.
 
-## Planned module ownership
+## Campus-local FedAvg demonstration
+
+Run `python -m src.federated.train` to train the eligible local datasets and save `results/federated_demo/weights.json`. The current run treats IIT Bombay apartment files, IIIT-Delhi building files, and Valahia building/year/vector files as separate clients. Each client uses its documented campus timezone, derives cyclic hour/weekday features, normalizes target values by a training-only local scale, and uses an 80/20 chronological split. FedAvg averages each client's parameter vector by its local training-row count for five rounds.
+
+The shared linear profile has five parameters: `hour_sin`, `hour_cos`, `weekday_sin`, `weekday_cos`, and `bias`. The report contains the final global vector and one global vector per round; it does not persist per-client update vectors or raw observations. The dashboard's federated panel reads this report from `/api/federated`.
+
+This is a single-machine algorithm demonstration. It has no network clients, transport encryption, secure aggregation, differential privacy, or adversarial-client protection. La Trobe is excluded while its unit/timezone are unverified. Twente is excluded because its current extracts are too short for the minimum training and chronological holdout. The aggregate model predicts normalized relative profiles only; absolute demand scaling stays local and must be restored on the campus before any operational use.
+
+## Module ownership
 
 - `src/ingest/`: source-specific parsers and validation.
-- `src/ml_model/`: chronological baselines, source experts, gradient-based gating, and EW reliability updates.
-- `src/backend/`: database-backed application endpoints.
-- `src/federated/`: deferred until the centralized workflow is reproducible.
+- `src/ml_model/`: centralized chronological baselines, model service, and forecasting.
+- `src/backend/`: dashboard API and local static-file server.
+- `src/federated/train.py`: source-specific local preparation, individual client training, chronological local evaluation, and weighted FedAvg.

@@ -1,1 +1,29 @@
 
+REPRODUCIBLE DEMONSTRATION GUIDE
+
+Requirements
+- Python dependencies listed in requirements.txt.
+- Supplied datasets under cloud datasets AWS uni/ (raw data are not committed).
+- Run commands from the repository root.
+
+Train client-local profiles and aggregate weights:
+    python -m src.federated.train
+
+The command applies each source-specific parser, derives local-clock features, uses an 80/20 chronological split, trains eligible datasets independently, and aggregates with FedAvg. It writes results/federated_demo/weights.json. Use --data-root PATH or --output PATH to select local paths and --rounds N to change the number of rounds.
+
+Run the browser presentation:
+    python -m src.backend.app
+    Open http://127.0.0.1:8000
+
+The federated dashboard panel reads the saved result through /api/federated. The main dashboard also uses PostgreSQL for a separate source-contract forecasting workflow; configure a local .env from .env.example before using those database-backed controls. Never commit real credentials.
+
+Source and safety notes
+- IIT Bombay apartment files are independent clients.
+- IIIT-Delhi uses the documented Asia/Kolkata timezone and power in watts; minute samples become hourly means.
+- Valahia building/year/vector files remain separate local clients.
+- La Trobe is excluded until unit/timezone are verified.
+- University of Twente is excluded until longer time series are provided.
+- No raw observations or per-client weight updates are written to the shared result artifact.
+- This prototype is not secure aggregation or a live multi-campus deployment.
+
+See docs/Dataset_Details.md, docs/Feature1_Workflow.md, src/federated/README.md, and presentation/Federated_Training_Results.md for details.

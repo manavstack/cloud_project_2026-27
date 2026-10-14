@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="540" viewBox="0 0 1200 540" role="img" aria-labelledby="title description">
+  <title id="title">Campus-local federated learning workflow</title>
+  <desc id="description">Campus datasets train local normalized profiles. Only model updates enter weighted FedAvg aggregation, and the global weights return to each campus. Raw readings and local scales remain local.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#26745c"/>
+    </marker>
+    <marker id="return-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#315d9b"/>
+    </marker>
+    <style>
+      text{font-family:Arial,sans-serif;fill:#142a40}
+      .title{font-size:25px;font-weight:bold}
+      .heading{font-size:17px;font-weight:bold}
+      .copy{font-size:14px}
+      .small{font-size:12px}
+      .campus{fill:#eef8f1;stroke:#3d916e;stroke-width:2}
+      .aggregate{fill:#edf3ff;stroke:#527cb8;stroke-width:2}
+      .note{fill:#fff7e8;stroke:#d49a3a;stroke-width:1.5}
+      .upload{fill:none;stroke:#26745c;stroke-width:3;marker-end:url(#arrow)}
+      .download{fill:none;stroke:#315d9b;stroke-width:3;marker-end:url(#return-arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="540" fill="#fbfdfb"/>
+  <text x="48" y="54" class="title">Campus-local FedAvg · Feature 1 demonstration</text>
+  <text x="48" y="84" class="copy">Five normalized time-of-week weights are trained locally, averaged by client training-row count, and returned each round.</text>
+
+  <g class="campus">
+    <rect x="55" y="140" width="260" height="94" rx="12"/>
+    <rect x="55" y="264" width="260" height="94" rx="12"/>
+    <rect x="55" y="388" width="260" height="94" rx="12"/>
+  </g>
+  <text x="78" y="175" class="heading">IIT Bombay clients</text>
+  <text x="78" y="201" class="copy">Apartment-local data + scale</text>
+  <text x="78" y="299" class="heading">IIIT-Delhi clients</text>
+  <text x="78" y="325" class="copy">Building-local hourly power profile</text>
+  <text x="78" y="423" class="heading">Valahia clients</text>
+  <text x="78" y="449" class="copy">Building/year/vector-local profiles</text>
+
+  <g class="campus">
+    <rect x="410" y="140" width="255" height="94" rx="12"/>
+    <rect x="410" y="264" width="255" height="94" rx="12"/>
+    <rect x="410" y="388" width="255" height="94" rx="12"/>
+  </g>
+  <text x="435" y="175" class="heading">Local fit + holdout</text>
+  <text x="435" y="201" class="copy">80/20 chronological split</text>
+  <text x="435" y="299" class="heading">Local fit + holdout</text>
+  <text x="435" y="325" class="copy">Local clock, local scale</text>
+  <text x="435" y="423" class="heading">Local fit + holdout</text>
+  <text x="435" y="449" class="copy">Electricity and heat separate</text>
+
+  <rect x="800" y="224" width="330" height="150" rx="14" class="aggregate"/>
+  <text x="836" y="264" class="heading">Weighted FedAvg</text>
+  <text x="836" y="294" class="copy">Aggregate compatible parameter updates</text>
+  <text x="836" y="321" class="copy">Return the global vector for the next round</text>
+  <text x="836" y="350" class="small">5 rounds · sample-count-weighted</text>
+
+  <path d="M315 187 H410" class="upload"/>
+  <path d="M315 311 H410" class="upload"/>
+  <path d="M315 435 H410" class="upload"/>
+  <path d="M665 187 C720 187 730 255 800 255" class="upload"/>
+  <path d="M665 311 H800" class="upload"/>
+  <path d="M665 435 C720 435 730 360 800 360" class="upload"/>
+  <path d="M800 238 C745 120 520 105 455 140" class="download"/>
+  <path d="M800 299 H665" class="download"/>
+  <path d="M800 360 C745 500 520 515 455 482" class="download"/>
+
+  <rect x="345" y="495" width="575" height="32" rx="8" class="note"/>
+  <text x="365" y="516" class="small">Raw readings and physical-unit normalization scales stay on the campus side; this is a single-machine simulation.</text>
+</svg>

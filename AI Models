@@ -1,1 +1,18 @@
 
+FEDRA AI MODEL NOTES
+
+Model A — Campus-local normalized profile (FedAvg demonstration)
+Purpose: learn a relative campus/building demand profile while keeping each source dataset local to its client.
+Inputs: local-time hour and weekday, represented by sine/cosine features.
+Target: observed demand divided by the training-only mean absolute demand at that client.
+Estimator: five-parameter linear profile, aggregated with sample-count-weighted FedAvg over five rounds.
+Validation: each client uses a chronological 80% train / 20% holdout split.
+Current trained clients: 59 (38 IIT Bombay, 9 IIIT-Delhi, 12 Valahia).
+Global weights and per-client normalized holdout metrics: results/federated_demo/weights.json.
+
+The weights are dimensionless. A campus must retain and apply its own local scale; the global vector is not an absolute Wh/W/kWh forecast. Client updates may leak information. This single-machine demonstration has no secure aggregation, differential privacy, or multi-campus network.
+
+Model B — Centralized dashboard forecaster
+The dashboard separately trains a HistGradientBoostingRegressor for one selected source/vector/unit/cadence contract. It uses chronological evaluation and a seasonal persistence baseline. Its physical-unit metrics and artifact are distinct from the FedAvg profile results.
+
+The Hybrid Adaptive Mixture-of-Experts remains a proposed next stage; this branch does not claim to have trained or validated it.

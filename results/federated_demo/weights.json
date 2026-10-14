@@ -1,0 +1,1324 @@
+{
+  "schema_version": 1,
+  "model": "federated_normalized_campus_profile_linear_v1",
+  "interpretation": "The global model predicts client-local mean-normalized demand from local hour and weekday. Each campus retains its private normalization scale and raw records. Client update vectors are not written to the shared artifact.",
+  "federation_mode": "single-machine FedAvg simulation; no campus network or secure aggregation",
+  "training": {
+    "algorithm": "FedAvg",
+    "rounds": 5,
+    "local_epochs_per_round": 20,
+    "learning_rate": 0.03,
+    "minimum_client_observations": 500,
+    "chronological_train_fraction": 0.8,
+    "features": [
+      "hour_sin",
+      "hour_cos",
+      "weekday_sin",
+      "weekday_cos",
+      "bias"
+    ],
+    "aggregation_weight": "number of local training observations",
+    "input_data_location": "cloud datasets AWS uni",
+    "raw_records_transferred": false
+  },
+  "global_weights": [
+    -0.03740572429401993,
+    -0.0884052666795631,
+    0.05557226056255408,
+    -0.01610473009884331,
+    0.9980700676669098
+  ],
+  "global_weight_names": [
+    "hour_sin",
+    "hour_cos",
+    "weekday_sin",
+    "weekday_cos",
+    "bias"
+  ],
+  "round_history": [
+    {
+      "round": 1,
+      "participating_clients": 59,
+      "training_observations": 478298,
+      "global_weights": [
+        -0.018876745505482375,
+        -0.04146960018190881,
+        0.024219857512100016,
+        -0.00857388575470902,
+        0.70970182339838
+      ]
+    },
+    {
+      "round": 2,
+      "participating_clients": 59,
+      "training_observations": 478298,
+      "global_weights": [
+        -0.02839584645941471,
+        -0.06470551327064004,
+        0.03924487996345725,
+        -0.012580243602295645,
+        0.9157546353772305
+      ]
+    },
+    {
+      "round": 3,
+      "participating_clients": 59,
+      "training_observations": 478298,
+      "global_weights": [
+        -0.033356130596000164,
+        -0.07753578345385165,
+        0.047959358065815534,
+        -0.014559865756760866,
+        0.9756056127859879
+      ]
+    },
+    {
+      "round": 4,
+      "participating_clients": 59,
+      "training_observations": 478298,
+      "global_weights": [
+        -0.03599096326482714,
+        -0.08456711050679983,
+        0.05285926473364682,
+        -0.01557394014804946,
+        0.9930044352114299
+      ]
+    },
+    {
+      "round": 5,
+      "participating_clients": 59,
+      "training_observations": 478298,
+      "global_weights": [
+        -0.03740572429401993,
+        -0.0884052666795631,
+        0.05557226056255408,
+        -0.01610473009884331,
+        0.9980700676669098
+      ]
+    }
+  ],
+  "participants": [
+    {
+      "client_id": "iit_bombay_apartment_1",
+      "source": "iit_bombay",
+      "dataset": "1.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7508,
+      "source_rows": 7508,
+      "excluded_observations": 0,
+      "train_observations": 6006,
+      "test_observations": 1502,
+      "chronological_cutoff": "2017-10-31T23:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.9390683438534062,
+        "normalized_rmse": 1.172287101519434,
+        "normalized_baseline_mae": 0.9392238265948629,
+        "test_observations": 1502
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_2",
+      "source": "iit_bombay",
+      "dataset": "2.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 6042,
+      "source_rows": 6042,
+      "excluded_observations": 0,
+      "train_observations": 4833,
+      "test_observations": 1209,
+      "chronological_cutoff": "2017-11-08T19:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.9550764177812,
+        "normalized_rmse": 5.763868036288731,
+        "normalized_baseline_mae": 1.956645794953698,
+        "test_observations": 1209
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_3",
+      "source": "iit_bombay",
+      "dataset": "3.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7425,
+      "source_rows": 7425,
+      "excluded_observations": 0,
+      "train_observations": 5940,
+      "test_observations": 1485,
+      "chronological_cutoff": "2017-10-27T02:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.7028052754799109,
+        "normalized_rmse": 0.8107911360222818,
+        "normalized_baseline_mae": 0.7034312414729306,
+        "test_observations": 1485
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_4",
+      "source": "iit_bombay",
+      "dataset": "4.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7425,
+      "source_rows": 7425,
+      "excluded_observations": 0,
+      "train_observations": 5940,
+      "test_observations": 1485,
+      "chronological_cutoff": "2017-10-27T02:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.7804595042905349,
+        "normalized_rmse": 0.9280100513611453,
+        "normalized_baseline_mae": 0.7778761005170115,
+        "test_observations": 1485
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_5",
+      "source": "iit_bombay",
+      "dataset": "5.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7422,
+      "source_rows": 7422,
+      "excluded_observations": 0,
+      "train_observations": 5937,
+      "test_observations": 1485,
+      "chronological_cutoff": "2017-10-27T02:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.8015793972083709,
+        "normalized_rmse": 0.9618495894043166,
+        "normalized_baseline_mae": 0.8138597424700144,
+        "test_observations": 1485
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_6",
+      "source": "iit_bombay",
+      "dataset": "6.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7480,
+      "source_rows": 7480,
+      "excluded_observations": 0,
+      "train_observations": 5984,
+      "test_observations": 1496,
+      "chronological_cutoff": "2017-11-01T05:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.9646318566258357,
+        "normalized_rmse": 1.5478780798115308,
+        "normalized_baseline_mae": 0.9671499951307247,
+        "test_observations": 1496
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_7",
+      "source": "iit_bombay",
+      "dataset": "7.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7462,
+      "source_rows": 7462,
+      "excluded_observations": 0,
+      "train_observations": 5969,
+      "test_observations": 1493,
+      "chronological_cutoff": "2017-11-01T08:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.160480770456119,
+        "normalized_rmse": 2.383472811618483,
+        "normalized_baseline_mae": 1.1627359245598137,
+        "test_observations": 1493
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_8",
+      "source": "iit_bombay",
+      "dataset": "8.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7508,
+      "source_rows": 7508,
+      "excluded_observations": 0,
+      "train_observations": 6006,
+      "test_observations": 1502,
+      "chronological_cutoff": "2017-10-31T23:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.7834494105999825,
+        "normalized_rmse": 0.9500687483001241,
+        "normalized_baseline_mae": 0.7828230191991239,
+        "test_observations": 1502
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_9",
+      "source": "iit_bombay",
+      "dataset": "9.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7508,
+      "source_rows": 7508,
+      "excluded_observations": 0,
+      "train_observations": 6006,
+      "test_observations": 1502,
+      "chronological_cutoff": "2017-10-31T23:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.6894950538991474,
+        "normalized_rmse": 0.7839106924807765,
+        "normalized_baseline_mae": 0.6916601751501449,
+        "test_observations": 1502
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_10",
+      "source": "iit_bombay",
+      "dataset": "10.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7508,
+      "source_rows": 7508,
+      "excluded_observations": 0,
+      "train_observations": 6006,
+      "test_observations": 1502,
+      "chronological_cutoff": "2017-10-31T23:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.8518696198134108,
+        "normalized_rmse": 1.009803779951437,
+        "normalized_baseline_mae": 0.8535168557631223,
+        "test_observations": 1502
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_11",
+      "source": "iit_bombay",
+      "dataset": "11.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7501,
+      "source_rows": 7501,
+      "excluded_observations": 0,
+      "train_observations": 6000,
+      "test_observations": 1501,
+      "chronological_cutoff": "2017-11-01T00:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.6285661399667022,
+        "normalized_rmse": 0.7409278755361511,
+        "normalized_baseline_mae": 0.6297268552409107,
+        "test_observations": 1501
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_12",
+      "source": "iit_bombay",
+      "dataset": "12.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 6928,
+      "source_rows": 6928,
+      "excluded_observations": 0,
+      "train_observations": 5542,
+      "test_observations": 1386,
+      "chronological_cutoff": "2017-10-26T12:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.7185956247812794,
+        "normalized_rmse": 0.8783977833646169,
+        "normalized_baseline_mae": 0.733236338425557,
+        "test_observations": 1386
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_14",
+      "source": "iit_bombay",
+      "dataset": "14.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 799,
+      "source_rows": 799,
+      "excluded_observations": 0,
+      "train_observations": 639,
+      "test_observations": 160,
+      "chronological_cutoff": "2018-05-26T00:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 9.627035845389434,
+        "normalized_rmse": 12.10054915254482,
+        "normalized_baseline_mae": 9.605420235848024,
+        "test_observations": 160
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_15",
+      "source": "iit_bombay",
+      "dataset": "15.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 5334,
+      "source_rows": 5334,
+      "excluded_observations": 0,
+      "train_observations": 4267,
+      "test_observations": 1067,
+      "chronological_cutoff": "2017-11-14T18:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.5168801600487325,
+        "normalized_rmse": 2.8979679565142287,
+        "normalized_baseline_mae": 1.5171809893829002,
+        "test_observations": 1067
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_16",
+      "source": "iit_bombay",
+      "dataset": "16.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 6403,
+      "source_rows": 6403,
+      "excluded_observations": 0,
+      "train_observations": 5122,
+      "test_observations": 1281,
+      "chronological_cutoff": "2017-11-05T19:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.6672296943262795,
+        "normalized_rmse": 0.8707148940038362,
+        "normalized_baseline_mae": 0.6691336952977575,
+        "test_observations": 1281
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_17",
+      "source": "iit_bombay",
+      "dataset": "17.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 799,
+      "source_rows": 799,
+      "excluded_observations": 0,
+      "train_observations": 639,
+      "test_observations": 160,
+      "chronological_cutoff": "2018-05-26T00:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 2.000694630024096,
+        "normalized_rmse": 2.789045103653466,
+        "normalized_baseline_mae": 1.9864671268833773,
+        "test_observations": 160
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_18",
+      "source": "iit_bombay",
+      "dataset": "18.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 799,
+      "source_rows": 799,
+      "excluded_observations": 0,
+      "train_observations": 639,
+      "test_observations": 160,
+      "chronological_cutoff": "2018-05-26T00:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 4.756822023531724,
+        "normalized_rmse": 6.2409424431065705,
+        "normalized_baseline_mae": 4.726825757914727,
+        "test_observations": 160
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_19",
+      "source": "iit_bombay",
+      "dataset": "19.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 799,
+      "source_rows": 799,
+      "excluded_observations": 0,
+      "train_observations": 639,
+      "test_observations": 160,
+      "chronological_cutoff": "2018-05-26T00:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 2.2102303736077578,
+        "normalized_rmse": 2.679727550685923,
+        "normalized_baseline_mae": 2.1904120201850015,
+        "test_observations": 160
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_20",
+      "source": "iit_bombay",
+      "dataset": "20.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 650,
+      "source_rows": 650,
+      "excluded_observations": 0,
+      "train_observations": 520,
+      "test_observations": 130,
+      "chronological_cutoff": "2018-05-27T06:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 3.1025201727100677,
+        "normalized_rmse": 3.9717165594829758,
+        "normalized_baseline_mae": 3.072398028118255,
+        "test_observations": 130
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_21",
+      "source": "iit_bombay",
+      "dataset": "21.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7315,
+      "source_rows": 7315,
+      "excluded_observations": 0,
+      "train_observations": 5852,
+      "test_observations": 1463,
+      "chronological_cutoff": "2017-10-30T21:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.7814072523655862,
+        "normalized_rmse": 1.1151175193355043,
+        "normalized_baseline_mae": 0.7876169610954094,
+        "test_observations": 1463
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_22",
+      "source": "iit_bombay",
+      "dataset": "22.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 799,
+      "source_rows": 799,
+      "excluded_observations": 0,
+      "train_observations": 639,
+      "test_observations": 160,
+      "chronological_cutoff": "2018-05-26T00:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 3.3831848210726436,
+        "normalized_rmse": 6.785491774685817,
+        "normalized_baseline_mae": 3.375217862187219,
+        "test_observations": 160
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_23",
+      "source": "iit_bombay",
+      "dataset": "23.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 799,
+      "source_rows": 799,
+      "excluded_observations": 0,
+      "train_observations": 639,
+      "test_observations": 160,
+      "chronological_cutoff": "2018-05-26T00:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.9540886026942909,
+        "normalized_rmse": 1.7143123323241194,
+        "normalized_baseline_mae": 0.9768756359228448,
+        "test_observations": 160
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_24",
+      "source": "iit_bombay",
+      "dataset": "24.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 799,
+      "source_rows": 799,
+      "excluded_observations": 0,
+      "train_observations": 639,
+      "test_observations": 160,
+      "chronological_cutoff": "2018-05-26T00:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.3515199166099444,
+        "normalized_rmse": 0.4448335561197512,
+        "normalized_baseline_mae": 0.34541391618476325,
+        "test_observations": 160
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_25",
+      "source": "iit_bombay",
+      "dataset": "25.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 799,
+      "source_rows": 799,
+      "excluded_observations": 0,
+      "train_observations": 639,
+      "test_observations": 160,
+      "chronological_cutoff": "2018-05-26T00:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 2.4410775326933902,
+        "normalized_rmse": 3.204737837989242,
+        "normalized_baseline_mae": 2.444590019666638,
+        "test_observations": 160
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_26",
+      "source": "iit_bombay",
+      "dataset": "26.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 799,
+      "source_rows": 799,
+      "excluded_observations": 0,
+      "train_observations": 639,
+      "test_observations": 160,
+      "chronological_cutoff": "2018-05-26T00:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 2.6298775568622257,
+        "normalized_rmse": 3.5864031510103964,
+        "normalized_baseline_mae": 2.6425913538922097,
+        "test_observations": 160
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_27",
+      "source": "iit_bombay",
+      "dataset": "27.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 765,
+      "source_rows": 765,
+      "excluded_observations": 0,
+      "train_observations": 612,
+      "test_observations": 153,
+      "chronological_cutoff": "2018-05-24T21:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.5571980611714323,
+        "normalized_rmse": 0.6891780873845205,
+        "normalized_baseline_mae": 0.5383258812367566,
+        "test_observations": 153
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_28",
+      "source": "iit_bombay",
+      "dataset": "28.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7315,
+      "source_rows": 7315,
+      "excluded_observations": 0,
+      "train_observations": 5852,
+      "test_observations": 1463,
+      "chronological_cutoff": "2017-10-30T21:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.9478949113362742,
+        "normalized_rmse": 1.4018046418628871,
+        "normalized_baseline_mae": 0.9773946347758179,
+        "test_observations": 1463
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_29",
+      "source": "iit_bombay",
+      "dataset": "29.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7114,
+      "source_rows": 7114,
+      "excluded_observations": 0,
+      "train_observations": 5691,
+      "test_observations": 1423,
+      "chronological_cutoff": "2017-11-01T13:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.8854017197629996,
+        "normalized_rmse": 1.1528945800993178,
+        "normalized_baseline_mae": 0.9048878497867893,
+        "test_observations": 1423
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_30",
+      "source": "iit_bombay",
+      "dataset": "30.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7315,
+      "source_rows": 7315,
+      "excluded_observations": 0,
+      "train_observations": 5852,
+      "test_observations": 1463,
+      "chronological_cutoff": "2017-10-30T21:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.9191015881132748,
+        "normalized_rmse": 1.0608970045651889,
+        "normalized_baseline_mae": 0.9204223078484651,
+        "test_observations": 1463
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_31",
+      "source": "iit_bombay",
+      "dataset": "31.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7089,
+      "source_rows": 7089,
+      "excluded_observations": 0,
+      "train_observations": 5671,
+      "test_observations": 1418,
+      "chronological_cutoff": "2017-11-04T17:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.7570190561638823,
+        "normalized_rmse": 10.667885163596,
+        "normalized_baseline_mae": 1.7724330562631638,
+        "test_observations": 1418
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_32",
+      "source": "iit_bombay",
+      "dataset": "32.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7315,
+      "source_rows": 7315,
+      "excluded_observations": 0,
+      "train_observations": 5852,
+      "test_observations": 1463,
+      "chronological_cutoff": "2017-10-30T21:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.7792889734988443,
+        "normalized_rmse": 0.9475929694961147,
+        "normalized_baseline_mae": 0.781455381033068,
+        "test_observations": 1463
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_33",
+      "source": "iit_bombay",
+      "dataset": "33.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7315,
+      "source_rows": 7315,
+      "excluded_observations": 0,
+      "train_observations": 5852,
+      "test_observations": 1463,
+      "chronological_cutoff": "2017-10-30T21:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.8609390466606056,
+        "normalized_rmse": 1.1314122656290857,
+        "normalized_baseline_mae": 0.8703751390652398,
+        "test_observations": 1463
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_34",
+      "source": "iit_bombay",
+      "dataset": "34.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7158,
+      "source_rows": 7158,
+      "excluded_observations": 0,
+      "train_observations": 5726,
+      "test_observations": 1432,
+      "chronological_cutoff": "2017-11-01T04:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.8340266929631253,
+        "normalized_rmse": 0.9992234967348739,
+        "normalized_baseline_mae": 0.8366036893445724,
+        "test_observations": 1432
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_35",
+      "source": "iit_bombay",
+      "dataset": "35.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7315,
+      "source_rows": 7315,
+      "excluded_observations": 0,
+      "train_observations": 5852,
+      "test_observations": 1463,
+      "chronological_cutoff": "2017-10-30T21:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.7670975605330017,
+        "normalized_rmse": 0.9764171461003555,
+        "normalized_baseline_mae": 0.7728308624945222,
+        "test_observations": 1463
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_36",
+      "source": "iit_bombay",
+      "dataset": "36.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7315,
+      "source_rows": 7315,
+      "excluded_observations": 0,
+      "train_observations": 5852,
+      "test_observations": 1463,
+      "chronological_cutoff": "2017-10-30T21:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.8076805847484915,
+        "normalized_rmse": 0.9232736556884532,
+        "normalized_baseline_mae": 0.8219376401362444,
+        "test_observations": 1463
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_37",
+      "source": "iit_bombay",
+      "dataset": "37.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7509,
+      "source_rows": 7509,
+      "excluded_observations": 0,
+      "train_observations": 6007,
+      "test_observations": 1502,
+      "chronological_cutoff": "2017-10-31T23:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.8867364046107546,
+        "normalized_rmse": 1.1813539302054041,
+        "normalized_baseline_mae": 0.888366757013946,
+        "test_observations": 1502
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_38",
+      "source": "iit_bombay",
+      "dataset": "38.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 7478,
+      "source_rows": 7478,
+      "excluded_observations": 0,
+      "train_observations": 5982,
+      "test_observations": 1496,
+      "chronological_cutoff": "2017-11-01T05:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.8498600836107628,
+        "normalized_rmse": 0.956104073684483,
+        "normalized_baseline_mae": 0.8589889945626118,
+        "test_observations": 1496
+      }
+    },
+    {
+      "client_id": "iit_bombay_apartment_39",
+      "source": "iit_bombay",
+      "dataset": "39.csv",
+      "target_unit": "Wh",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 799,
+      "source_rows": 799,
+      "excluded_observations": 0,
+      "train_observations": 639,
+      "test_observations": 160,
+      "chronological_cutoff": "2018-05-26T00:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.8492801257689013,
+        "normalized_rmse": 3.5025048630466804,
+        "normalized_baseline_mae": 1.8302010692311665,
+        "test_observations": 160
+      }
+    },
+    {
+      "client_id": "iiit_delhi_acad_build_mains",
+      "source": "iiit_delhi",
+      "dataset": "acad_build_mains.csv.zip",
+      "target_unit": "W",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 37882,
+      "source_rows": 2269530,
+      "excluded_observations": 3,
+      "train_observations": 30305,
+      "test_observations": 7577,
+      "chronological_cutoff": "2017-02-13T05:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.36772513977560334,
+        "normalized_rmse": 0.5559851010394231,
+        "normalized_baseline_mae": 0.41012172518557344,
+        "test_observations": 7577
+      }
+    },
+    {
+      "client_id": "iiit_delhi_boys_hostel_mains",
+      "source": "iiit_delhi",
+      "dataset": "boys_hostel_mains.csv",
+      "target_unit": "W",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 28756,
+      "source_rows": 1671546,
+      "excluded_observations": 2,
+      "train_observations": 23004,
+      "test_observations": 5752,
+      "chronological_cutoff": "2017-03-31T00:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.37195674554059033,
+        "normalized_rmse": 0.5255579969630172,
+        "normalized_baseline_mae": 0.37666612254596127,
+        "test_observations": 5752
+      }
+    },
+    {
+      "client_id": "iiit_delhi_boys_hostel_ups",
+      "source": "iiit_delhi",
+      "dataset": "boys_hostel_ups.csv.zip",
+      "target_unit": "W",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 28943,
+      "source_rows": 1688044,
+      "excluded_observations": 1,
+      "train_observations": 23154,
+      "test_observations": 5789,
+      "chronological_cutoff": "2017-04-05T22:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.39640854477648213,
+        "normalized_rmse": 0.49418282251694984,
+        "normalized_baseline_mae": 0.40035849429237524,
+        "test_observations": 5789
+      }
+    },
+    {
+      "client_id": "iiit_delhi_facilities_build_mains",
+      "source": "iiit_delhi",
+      "dataset": "facilities_build_mains.csv.zip",
+      "target_unit": "W",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 34462,
+      "source_rows": 2048910,
+      "excluded_observations": 7,
+      "train_observations": 27569,
+      "test_observations": 6893,
+      "chronological_cutoff": "2017-03-14T23:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.31495225451042685,
+        "normalized_rmse": 0.4078890172981572,
+        "normalized_baseline_mae": 0.3129114487428596,
+        "test_observations": 6893
+      }
+    },
+    {
+      "client_id": "iiit_delhi_girls_hostel_mains",
+      "source": "iiit_delhi",
+      "dataset": "girls_hostel_mains.csv",
+      "target_unit": "W",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 27694,
+      "source_rows": 1653053,
+      "excluded_observations": 0,
+      "train_observations": 22155,
+      "test_observations": 5539,
+      "chronological_cutoff": "2017-05-14T05:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.2529968609192784,
+        "normalized_rmse": 0.31714682887469975,
+        "normalized_baseline_mae": 0.25572866781862796,
+        "test_observations": 5539
+      }
+    },
+    {
+      "client_id": "iiit_delhi_girls_hostel_ups",
+      "source": "iiit_delhi",
+      "dataset": "girls_hostel_ups.csv.zip",
+      "target_unit": "W",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 38422,
+      "source_rows": 2300745,
+      "excluded_observations": 0,
+      "train_observations": 30737,
+      "test_observations": 7685,
+      "chronological_cutoff": "2017-02-13T19:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.2506864234689712,
+        "normalized_rmse": 0.3007676084863439,
+        "normalized_baseline_mae": 0.2569058753697317,
+        "test_observations": 7685
+      }
+    },
+    {
+      "client_id": "iiit_delhi_lecture_build_mains",
+      "source": "iiit_delhi",
+      "dataset": "lecture_build_mains.csv",
+      "target_unit": "W",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 37882,
+      "source_rows": 2269309,
+      "excluded_observations": 0,
+      "train_observations": 30305,
+      "test_observations": 7577,
+      "chronological_cutoff": "2017-02-13T05:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.5863914433682225,
+        "normalized_rmse": 2.540003174039822,
+        "normalized_baseline_mae": 1.717928028233555,
+        "test_observations": 7577
+      }
+    },
+    {
+      "client_id": "iiit_delhi_library_build_mains",
+      "source": "iiit_delhi",
+      "dataset": "library_build_mains.csv.zip",
+      "target_unit": "W",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 28640,
+      "source_rows": 1713637,
+      "excluded_observations": 0,
+      "train_observations": 22912,
+      "test_observations": 5728,
+      "chronological_cutoff": "2017-04-08T07:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.5637906091103057,
+        "normalized_rmse": 0.7669653915931056,
+        "normalized_baseline_mae": 0.6174287929171453,
+        "test_observations": 5728
+      }
+    },
+    {
+      "client_id": "iiit_delhi_mess_build_mains",
+      "source": "iiit_delhi",
+      "dataset": "mess_build_mains.csv.zip",
+      "target_unit": "W",
+      "local_timezone": "Asia/Kolkata",
+      "observations": 33676,
+      "source_rows": 2013090,
+      "excluded_observations": 1,
+      "train_observations": 26940,
+      "test_observations": 6736,
+      "chronological_cutoff": "2017-03-18T18:30:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.33569481077908875,
+        "normalized_rmse": 0.44253751229073895,
+        "normalized_baseline_mae": 0.36309402601677815,
+        "test_observations": 6736
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_elec_demand_building_ABR_2019",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_elec_demand_building_ABR_2019.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2019-10-19T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.9083206078964229,
+        "normalized_rmse": 1.164756415465816,
+        "normalized_baseline_mae": 0.9110417021717674,
+        "test_observations": 1752
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_elec_demand_building_ABR_2020",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_elec_demand_building_ABR_2020.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2020-10-18T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.29565969528906727,
+        "normalized_rmse": 0.34262026937214746,
+        "normalized_baseline_mae": 0.33813801793708415,
+        "test_observations": 1752
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_elec_demand_building_C_2019",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_elec_demand_building_C_2019.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2019-10-19T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.6527908785086072,
+        "normalized_rmse": 0.8352038025548977,
+        "normalized_baseline_mae": 0.6554973746901589,
+        "test_observations": 1752
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_elec_demand_building_C_2020",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_elec_demand_building_C_2020.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2020-10-18T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.3695039310947386,
+        "normalized_rmse": 0.5192647550227635,
+        "normalized_baseline_mae": 0.37757677868453465,
+        "test_observations": 1752
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_elec_demand_building_ICSTM_2019",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_elec_demand_building_ICSTM_2019.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2019-10-19T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.28179089047538863,
+        "normalized_rmse": 0.7400492192911033,
+        "normalized_baseline_mae": 0.3385404263960439,
+        "test_observations": 1752
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_elec_demand_building_ICSTM_2020",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_elec_demand_building_ICSTM_2020.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2020-10-18T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 0.6225106038087714,
+        "normalized_rmse": 2.0338284602425154,
+        "normalized_baseline_mae": 0.6248451274807079,
+        "test_observations": 1752
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_heat_demand_building_ABR_2019",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_heat_demand_building_ABR_2019.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2019-10-19T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.1693246894585099,
+        "normalized_rmse": 1.3744185039949925,
+        "normalized_baseline_mae": 1.1655307599309073,
+        "test_observations": 1752
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_heat_demand_building_ABR_2020",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_heat_demand_building_ABR_2020.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2020-10-18T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.166595732391686,
+        "normalized_rmse": 1.3180848830101994,
+        "normalized_baseline_mae": 1.162228017846957,
+        "test_observations": 1752
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_heat_demand_building_C_2019",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_heat_demand_building_C_2019.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2019-10-19T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.1727594479514487,
+        "normalized_rmse": 1.3770973909300526,
+        "normalized_baseline_mae": 1.170138924756268,
+        "test_observations": 1752
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_heat_demand_building_C_2020",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_heat_demand_building_C_2020.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2020-10-18T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.167648855796407,
+        "normalized_rmse": 1.3228416343636102,
+        "normalized_baseline_mae": 1.1655905477125317,
+        "test_observations": 1752
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_heat_demand_building_ICSTM_2019",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_heat_demand_building_ICSTM_2019.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2019-10-19T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.1693246894734879,
+        "normalized_rmse": 1.3744185040182788,
+        "normalized_baseline_mae": 1.1655307599471647,
+        "test_observations": 1752
+      }
+    },
+    {
+      "client_id": "valahia_UVTgv_heat_demand_building_ICSTM_2020",
+      "source": "valahia_uvtgv",
+      "dataset": "UVTgv_heat_demand_building_ICSTM_2020.csv",
+      "target_unit": "kWh",
+      "local_timezone": "Europe/Bucharest",
+      "observations": 8760,
+      "source_rows": 8760,
+      "excluded_observations": 0,
+      "train_observations": 7008,
+      "test_observations": 1752,
+      "chronological_cutoff": "2020-10-18T22:00:00+00:00",
+      "metrics": {
+        "normalized_mae": 1.1665957324162968,
+        "normalized_rmse": 1.3180848830382632,
+        "normalized_baseline_mae": 1.1622280178718032,
+        "test_observations": 1752
+      }
+    }
+  ],
+  "excluded_datasets": [
+    {
+      "client_id": "iit_bombay_apartment_13",
+      "source": "iit_bombay",
+      "dataset": "13.csv",
+      "status": "excluded",
+      "observations": 37,
+      "excluded_observations": 0,
+      "reason": "Needs at least 500 valid timestamp/value rows"
+    },
+    {
+      "client_id": "twente_Pakkerij residential",
+      "source": "university_of_twente",
+      "dataset": "Pakkerij residential.csv",
+      "status": "excluded",
+      "observations": 32,
+      "excluded_observations": 0,
+      "reason": "Only 32 rows; at least 500 valid rows are required for a chronological local holdout"
+    },
+    {
+      "client_id": "twente_itc hotel residential",
+      "source": "university_of_twente",
+      "dataset": "itc hotel residential.csv",
+      "status": "excluded",
+      "observations": 32,
+      "excluded_observations": 0,
+      "reason": "Only 32 rows; at least 500 valid rows are required for a chronological local holdout"
+    },
+    {
+      "client_id": "twente_nano-lab academic",
+      "source": "university_of_twente",
+      "dataset": "nano-lab academic.csv",
+      "status": "excluded",
+      "observations": 32,
+      "excluded_observations": 0,
+      "reason": "Only 32 rows; at least 500 valid rows are required for a chronological local holdout"
+    },
+    {
+      "client_id": "twente_sports center - others ",
+      "source": "university_of_twente",
+      "dataset": "sports center - others .csv",
+      "status": "excluded",
+      "observations": 32,
+      "excluded_observations": 0,
+      "reason": "Only 32 rows; at least 500 valid rows are required for a chronological local holdout"
+    },
+    {
+      "client_id": "twente_stall - others",
+      "source": "university_of_twente",
+      "dataset": "stall - others.csv",
+      "status": "excluded",
+      "observations": 32,
+      "excluded_observations": 0,
+      "reason": "Only 32 rows; at least 500 valid rows are required for a chronological local holdout"
+    },
+    {
+      "client_id": "twente_technohall academic",
+      "source": "university_of_twente",
+      "dataset": "technohall academic.csv",
+      "status": "excluded",
+      "observations": 32,
+      "excluded_observations": 0,
+      "reason": "Only 32 rows; at least 500 valid rows are required for a chronological local holdout"
+    },
+    {
+      "client_id": "twente_tennis court",
+      "source": "university_of_twente",
+      "dataset": "tennis court.csv",
+      "status": "excluded",
+      "observations": 33,
+      "excluded_observations": 0,
+      "reason": "Only 33 rows; at least 500 valid rows are required for a chronological local holdout"
+    },
+    {
+      "client_id": "twente_u parkhotel residential",
+      "source": "university_of_twente",
+      "dataset": "u parkhotel residential.csv",
+      "status": "excluded",
+      "observations": 32,
+      "excluded_observations": 0,
+      "reason": "Only 32 rows; at least 500 valid rows are required for a chronological local holdout"
+    },
+    {
+      "client_id": "twente_zilverline academic",
+      "source": "university_of_twente",
+      "dataset": "zilverline academic.csv",
+      "status": "excluded",
+      "observations": 33,
+      "excluded_observations": 0,
+      "reason": "Only 33 rows; at least 500 valid rows are required for a chronological local holdout"
+    },
+    {
+      "client_id": "la_trobe_campus_meters",
+      "source": "la_trobe",
+      "dataset": "building_consumption.csv.zip",
+      "status": "excluded",
+      "observations": null,
+      "excluded_observations": null,
+      "reason": "Source unit and timezone are pending validation; no local-time profile is inferred"
+    }
+  ]
+}

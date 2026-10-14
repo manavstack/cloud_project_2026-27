@@ -1,3 +1,151 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FEDRA Feature 1</title><link rel="stylesheet" href="styles.css"></head>
-<body><main><p class="eyebrow">CLOUD ENERGY PREDICTION</p><h1>FEDRA Feature 1</h1><p class="lead">Source-aware, leakage-safe forecasting for university energy data.</p><section><h2>Pipeline status</h2><dl><div><dt>Data</dt><dd>Canonical source ingestion</dd></div><div><dt>Storage</dt><dd>PostgreSQL cloud_project</dd></div><div><dt>Model</dt><dd>Gradient gate + EW reliability</dd></div></dl></section><button id="health">Check local API</button><p id="status" aria-live="polite">API not checked.</p></main><script src="app.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <title>FEDRA | Energy intelligence</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="FEDRA home">
+      <span class="brand-mark">F</span>
+      <span>FEDRA <small>ENERGY INTELLIGENCE</small></span>
+    </a>
+    <div class="connection"><span class="pulse"></span><span id="connection-label">Connecting to local database</span></div>
+  </header>
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">SMART CAMPUS · FORECASTING WORKSPACE</p>
+        <h1>Energy, made <span>predictable.</span></h1>
+        <p class="hero-copy">Explore meter history, evaluate a time-aware model, and project upcoming demand.</p>
+      </div>
+      <div class="hero-controls">
+        <label for="source-select">Dataset / energy contract</label>
+        <select id="source-select" aria-label="Dataset and energy contract"></select>
+        <button id="refresh-button" class="button button-quiet" type="button">Refresh data</button>
+      </div>
+    </section>
+
+    <section class="stats-grid" aria-label="Dataset statistics">
+      <article class="stat-card"><span class="stat-label">OBSERVATIONS</span><strong id="stat-observations">—</strong><span class="stat-note" id="stat-date-range">Awaiting data</span></article>
+      <article class="stat-card"><span class="stat-label">METERED ASSETS</span><strong id="stat-assets">—</strong><span class="stat-note">Distinct source assets</span></article>
+      <article class="stat-card"><span class="stat-label">AVERAGE READING</span><strong id="stat-average">—</strong><span class="stat-note" id="stat-unit">Dataset mean</span></article>
+      <article class="stat-card"><span class="stat-label">MODEL STATUS</span><strong id="stat-model" class="status-text">Not trained</strong><span class="stat-note" id="stat-model-note">Train with a chronological holdout</span></article>
+    </section>
+
+    <section class="panel chart-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">HISTORICAL SIGNAL</p><h2>Daily energy profile</h2><p class="subheading" id="daily-caption">Summed across the selected dataset</p></div>
+        <span class="chart-legend"><i class="legend-dot actual-dot"></i> Daily total (<span id="chart-unit">—</span>)</span>
+      </div>
+      <div class="chart-wrap"><svg id="history-chart" role="img" aria-label="Daily energy history chart" viewBox="0 0 960 300" preserveAspectRatio="none"></svg></div>
+    </section>
+
+    <section class="work-grid">
+      <article class="panel model-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">MODEL LAB</p><h2>Chronological evaluation</h2><p class="subheading">Latest 20% held out · compared with a 24-step seasonal baseline</p></div>
+          <button id="train-button" class="button button-primary" type="button">Train &amp; evaluate</button>
+        </div>
+        <p id="model-message" class="inline-message" aria-live="polite">Train to evaluate the selected source.</p>
+        <div class="metrics-grid" id="metrics-grid">
+          <div class="metric"><span>Model MAE</span><strong id="metric-mae">—</strong></div>
+          <div class="metric"><span>Seasonal MAE</span><strong id="metric-baseline">—</strong></div>
+          <div class="metric"><span>Model RMSE</span><strong id="metric-rmse">—</strong></div>
+          <div class="metric"><span>Holdout rows</span><strong id="metric-test-count">—</strong></div>
+        </div>
+        <div id="analysis-callout" class="analysis-callout">The dashboard will state whether the trained model beats the baseline on held-out observations.</div>
+        <p class="footnote">Current model: pooled single-contract gradient boosting. Multi-source MoE comparison is deferred until source experts can be aligned on compatible units, cadence, and target semantics.</p>
+      </article>
+
+      <article class="panel forecast-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">FORWARD LOOK</p><h2>Demand prediction</h2><p class="subheading">Recursive forecast from latest stored reading; lags use prior observations</p></div>
+        </div>
+        <div class="forecast-controls">
+          <label>Meter <select id="asset-select" aria-label="Meter asset"></select></label>
+          <label>Steps <select id="horizon-select" aria-label="Forecast intervals">
+            <option value="6">6 intervals</option><option value="12">12 intervals</option>
+            <option value="24" selected>24 intervals</option><option value="48">48 intervals</option>
+          </select></label>
+          <button id="forecast-button" class="button button-quiet" type="button">Predict</button>
+        </div>
+        <div class="chart-wrap forecast-chart-wrap"><svg id="forecast-chart" role="img" aria-label="Future energy prediction chart" viewBox="0 0 640 220" preserveAspectRatio="none"></svg></div>
+        <p id="forecast-message" class="inline-message" aria-live="polite">Train a model to enable predictions.</p>
+        <div class="table-wrap compact-table-wrap">
+          <table><thead><tr><th>Forecast time (UTC)</th><th>Prediction</th></tr></thead><tbody id="forecast-rows"><tr><td colspan="2" class="empty-cell">No forecast yet</td></tr></tbody></table>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel quality-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">DATA QUALITY</p><h2>Coverage checks</h2><p class="subheading">Observed gaps and target distribution; no silent interpolation</p></div>
+      </div>
+      <div class="quality-grid">
+        <div class="metric"><span>Zero readings</span><strong id="quality-zeros">—</strong></div>
+        <div class="metric"><span>Negative readings</span><strong id="quality-negatives">—</strong></div>
+        <div class="metric"><span>95th percentile (<span class="unit-label">unit</span>)</span><strong id="quality-p95">—</strong></div>
+        <div class="metric"><span>Off-cadence transitions</span><strong id="quality-gaps">—</strong></div>
+        <div class="metric"><span>Largest observed gap</span><strong id="quality-largest-gap">—</strong></div>
+      </div>
+      <p id="quality-recommendation" class="analysis-callout">Data quality recommendations will appear with dataset statistics.</p>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">DATA INVENTORY</p><h2>Asset statistics</h2><p class="subheading">Per-meter coverage and observed consumption distribution</p></div>
+        <span class="table-count" id="asset-count-label"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>Readings</th><th>Coverage start</th><th>Coverage end</th><th>Mean (<span class="unit-label">unit</span>)</th><th>Min</th><th>Max</th></tr></thead>
+          <tbody id="asset-rows"><tr><td colspan="7" class="empty-cell">Loading data…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="panel solution-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">PROPOSED SOLUTION</p><h2>From experiment to campus forecast</h2></div>
+      </div>
+      <ol class="solution-list">
+        <li><strong>Refresh the inputs.</strong> IIT Bombay observations end in June 2018 and Valahia records end in December 2020; current operational predictions require a recent, regularly updated feed.</li>
+        <li><strong>Resolve data quality explicitly.</strong> Review zero readings and off-cadence gaps with source documentation; do not silently interpolate missing consumption.</li>
+        <li><strong>Expand only on compatible contracts.</strong> Validate La Trobe's unit and timezone; keep Valahia heat separate from electricity; compare source experts and the MoE only after cadence, horizon, and target units align.</li>
+      </ol>
+    </section>
+    <section class="panel federated-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">PRIVACY-PRESERVING DEMONSTRATION</p><h2>Campus-local training · FedAvg weights</h2><p class="subheading">Each eligible dataset trains locally; only normalized-profile model updates are aggregated.</p></div>
+      </div>
+      <p id="federated-message" class="inline-message" aria-live="polite">Loading federated training evidence…</p>
+      <div class="metrics-grid federated-stats">
+        <div class="metric"><span>Participating clients</span><strong id="federated-client-count">—</strong></div>
+        <div class="metric"><span>FedAvg rounds</span><strong id="federated-round-count">—</strong></div>
+        <div class="metric"><span>Local training rows</span><strong id="federated-observation-count">—</strong></div>
+        <div class="metric"><span>Excluded datasets</span><strong id="federated-excluded-count">—</strong></div>
+      </div>
+      <h3 class="federated-subheading">Transferred global model weights</h3>
+      <div class="table-wrap">
+        <table><thead><tr><th>Parameter</th><th>FedAvg value</th></tr></thead><tbody id="federated-weight-rows"><tr><td colspan="2" class="empty-cell">No weights loaded</td></tr></tbody></table>
+      </div>
+      <h3 class="federated-subheading">Global weights transferred after each round</h3>
+      <div class="table-wrap">
+        <table><thead id="federated-round-header"><tr><th>Round</th></tr></thead><tbody id="federated-round-rows"><tr><td class="empty-cell">No round history loaded</td></tr></tbody></table>
+      </div>
+      <h3 class="federated-subheading">Client updates and local evaluation</h3>
+      <div class="table-wrap federated-client-table">
+        <table><thead><tr><th>Local client</th><th>Source dataset</th><th>Train / test rows</th><th>Normalized MAE</th></tr></thead><tbody id="federated-client-rows"><tr><td colspan="4" class="empty-cell">No client results loaded</td></tr></tbody></table>
+      </div>
+      <h3 class="federated-subheading">Excluded pending data validation</h3>
+      <ul id="federated-exclusions" class="federated-exclusions"><li>Loading exclusions…</li></ul>
+      <p class="footnote">This single-machine FedAvg simulation is a presentation prototype, not a deployed federation. Client updates can leak information; production requires secure aggregation, authenticated campus clients, and an approved privacy budget.</p>
+    </section>
+    <p class="footnote">Forecasts are experimental and should not be used as operational controls. Mixed units and energy vectors are not combined.</p>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>
