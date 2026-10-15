@@ -1,0 +1,38 @@
+{
+  "academic": {
+    "z": {
+      "academic": 0.0,
+      "residential": 0.0,
+      "others": 0.0
+    },
+    "h": {
+      "academic": 0.3333333333333333,
+      "residential": 0.3333333333333333,
+      "others": 0.3333333333333333
+    }
+  },
+  "residential": {
+    "z": {
+      "academic": -0.10741300153387845,
+      "residential": 0.037172057198470915,
+      "others": 0.07024094433540753
+    },
+    "h": {
+      "academic": 0.17524658108214522,
+      "residential": 0.45076921405605436,
+      "others": 0.37398420486180045
+    }
+  },
+  "others": {
+    "z": {
+      "academic": 0.0,
+      "residential": 0.0,
+      "others": 0.0
+    },
+    "h": {
+      "academic": 0.3333333333333333,
+      "residential": 0.3333333333333333,
+      "others": 0.3333333333333333
+    }
+  }
+}

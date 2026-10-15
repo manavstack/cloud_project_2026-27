@@ -1,0 +1,17 @@
+services:
+
+  ml:
+    build: .
+
+    container_name: fedra_ml
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./models:/app/models
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    command: python src/train_experts.py
