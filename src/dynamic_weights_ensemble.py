@@ -44,7 +44,7 @@ if os.path.exists("/app/models"):
 else:
     MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models")
 
-STATE_FILE = os.path.join(MODEL_DIR, "hybrid_moe_state.json")
+STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ml_models", "hybrid_moe_state.json")
 
 FEATURE_COLS = [
     "hour",

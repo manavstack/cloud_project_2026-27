@@ -232,7 +232,7 @@ def run_auto_calibration():
     # Show final 3×3 matrix
     print(f"\n[FINAL 3×3 WEIGHT MATRIX]")
     print_3x3_matrix(moe.get_full_3x3_matrix())
-    print(f"\n  State saved to: hybrid_moe_state.json")
+    print(f"\n  State saved to: src/ml_models/hybrid_moe_state.json")
     print("=" * 76)
 
 
