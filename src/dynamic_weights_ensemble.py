@@ -99,8 +99,17 @@ def init_history_table():
         ensemble_prediction NUMERIC NOT NULL,
         ensemble_error NUMERIC,
 
+        new_academic_weight NUMERIC,
+        new_residential_weight NUMERIC,
+        new_others_weight NUMERIC,
+        new_weights_ratio VARCHAR(60),
+
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+    ALTER TABLE moe_prediction_history ADD COLUMN IF NOT EXISTS new_academic_weight NUMERIC;
+    ALTER TABLE moe_prediction_history ADD COLUMN IF NOT EXISTS new_residential_weight NUMERIC;
+    ALTER TABLE moe_prediction_history ADD COLUMN IF NOT EXISTS new_others_weight NUMERIC;
+    ALTER TABLE moe_prediction_history ADD COLUMN IF NOT EXISTS new_weights_ratio VARCHAR(60);
     """
     try:
         conn = psycopg2.connect(**DB_CONFIG)
@@ -135,7 +144,11 @@ def log_prediction_to_db(record: dict) -> int:
         final_residential,
         final_others,
         ensemble_prediction,
-        ensemble_error
+        ensemble_error,
+        new_academic_weight,
+        new_residential_weight,
+        new_others_weight,
+        new_weights_ratio
     ) VALUES (
         %(target_category)s,
         %(target_timestamp)s,
@@ -156,7 +169,11 @@ def log_prediction_to_db(record: dict) -> int:
         %(final_residential)s,
         %(final_others)s,
         %(ensemble_prediction)s,
-        %(ensemble_error)s
+        %(ensemble_error)s,
+        %(new_academic_weight)s,
+        %(new_residential_weight)s,
+        %(new_others_weight)s,
+        %(new_weights_ratio)s
     ) RETURNING id;
     """
     try:
@@ -494,8 +511,12 @@ def run_interactive_session():
 
             except ValueError:
                 print("  [!] Invalid number entered. State unchanged.")
+                actual_val = None
         else:
             print("  (Update skipped. Current weights preserved.)")
+
+        new_w = upd["new_hybrid_w"] if (actual_val is not None and "upd" in locals()) else hybrid_w
+        ratio_str = f"A:{new_w['academic']*100:.1f}% | R:{new_w['residential']*100:.1f}% | O:{new_w['others']*100:.1f}%"
 
         # 8. Log Telemetry to PostgreSQL
         history_record = {
@@ -519,6 +540,10 @@ def run_interactive_session():
             "final_others": hybrid_w["others"],
             "ensemble_prediction": final_kwh,
             "ensemble_error": err_moe,
+            "new_academic_weight": float(new_w["academic"]),
+            "new_residential_weight": float(new_w["residential"]),
+            "new_others_weight": float(new_w["others"]),
+            "new_weights_ratio": ratio_str,
         }
 
         row_id = log_prediction_to_db(history_record)
